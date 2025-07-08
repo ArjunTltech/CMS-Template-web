@@ -46,25 +46,39 @@ function LoginPage() {
     });
 
     // Form submission handler
-    const onSubmit = async (data) => {
-        setLoading(true);
-        setError('');
+ const onSubmit = async (data) => {
+    setLoading(true);
+    setError('');
 
-        try {
-            const response = await axiosInstance.post('/auth/login', data);
-            const { token, user } = response.data;
-            playNotificationSound()
-            login(token, user.role, data.rememberMe);
-            navigate('/');
-        } catch (error) {
-            setError(error.response?.data?.message || 'Login failed');
-            setTimeout(() => {
-                setError('');
-            }, 2000)
-        } finally {
-            setLoading(false);
+    const { email, password, rememberMe } = data;
+
+    // Hardcoded users
+    const users = {
+        'superadmin@gmail.com': {
+            password: 'superadmin',
+            role: 'superadmin'
+        },
+        'admin@gmail.com': {
+            password: 'admin',
+            role: 'admin'
         }
     };
+
+    // Simulate server delay
+    setTimeout(() => {
+        const user = users[email];
+        if (user && user.password === password) {
+            playNotificationSound();
+            login('dummy_token_value', user.role, rememberMe); // You can store any dummy token
+            navigate('/');
+        } else {
+            setError('Invalid email or password');
+            setTimeout(() => setError(''), 2000);
+        }
+        setLoading(false);
+    }, 1000);
+};
+
 
     return (
         <div style={{ backgroundImage: `url(${BackgroundImage})` }} className=" relative min-h-screen bg-cover bg-center w-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

@@ -7,6 +7,8 @@ import { useAuth } from "../context/AuthContext";
 import { useSocket } from "../context/SocketContext";
 import { toast } from "react-toastify";
 import axiosInstance from "../config/axios";
+import dummyNotifications from "./data/dummyNotifications ";
+
 
 function Header({ onToggleSidebar, isCollapsed }) {
   const { theme, toggleTheme } = useTheme();
@@ -52,14 +54,16 @@ function Header({ onToggleSidebar, isCollapsed }) {
   };
 
   // Fetch notifications
-  const fetchNotifications = async () => {
-    try {
-      const response = await axiosInstance.get("notification/get-all-notifications");
-      setNotifications(response.data);
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-    }
-  };
+useEffect(() => {
+  setNotifications(dummyNotifications);
+
+  const interval = setInterval(() => {
+    setNotifications(prev => [...prev]); // Force re-render every minute
+  }, 60000);
+
+  return () => clearInterval(interval);
+}, []);
+
 
   // Handle new socket notifications
   useEffect(() => {
