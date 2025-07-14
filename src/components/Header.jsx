@@ -80,7 +80,7 @@ useEffect(() => {
   }, [socket]);
 
   useEffect(() => {
-    fetchNotifications();
+    // fetchNotifications();
     // Update relative times every minute
     const interval = setInterval(() => {
       setNotifications(prev => [...prev]); // Force re-render to update times

@@ -5,9 +5,10 @@ import BlogCard from "./ServiceCard";
 import axiosInstance from "../../config/axios";
 import ServiceCard from "./ServiceCard";
 import ServiceForm from "./CreateForm";
+import dummyService from "../../components/data/dummyService";
 
 function ServiceLayout() {
-  const [services, setServices] = useState([]);  
+  const [services, setServices] = useState(dummyService);  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -15,25 +16,27 @@ function ServiceLayout() {
   const [mode, setMode] = useState("add");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const refreshServiceList = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await axiosInstance.get("/service/get-all-service");
-      setServices(response.data.data);  
-    } catch (err) {
-      setError("Failed to load services");
-      console.error("Error fetching services:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // const refreshServiceList = useCallback(async () => {
+  //   try {
+  //     setLoading(true);
+  //     const response = await axiosInstance.get("/service/get-all-service");
+  //     setServices(response.data.data);  
+  //   } catch (err) {
+  //     setError("Failed to load services");
+  //     console.error("Error fetching services:", err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, []);
 
-  useEffect(() => {
-    refreshServiceList();
-  }, [refreshServiceList]);
-
+  // useEffect(() => {
+  //   refreshServiceList();
+  // }, [refreshServiceList]);
+  setTimeout(()=>{
+setLoading(false);
+  },3000)
   const handleDeleteService = (serviceId) => {
-    setServices((prevServices) => prevServices.filter((service) => service.id !== serviceId));
+    setServices((prevServices) => prevServices?.filter((service) => service.id !== serviceId));
   };
 
   const handleEditService = (service) => {
@@ -47,7 +50,7 @@ function ServiceLayout() {
     setMode("add");
     setIsDrawerOpen(true);
   };
-  const filteredServices = services.filter((service) =>
+  const filteredServices = services?.filter((service) =>
     service.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     service.shortDescription?.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -69,7 +72,7 @@ function ServiceLayout() {
             {/* <h1 className="text-3xl font-bold text-neutral-content">Services</h1> */}
             <div className=' space-y-2'>
        <h1 className="text-3xl font-bold text-neutral-content">Services </h1>
-       <p >Total Services : {services.length}</p>
+       <p >Total Services : {services?.length}</p>
         </div>
             <button
               className="btn btn-primary text-white gap-2"
@@ -119,7 +122,7 @@ function ServiceLayout() {
             <div className="text-center text-red-500">{error}</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredServices.map((service) => (
+              {services?.map((service) => (
                 <ServiceCard
                   key={service.id}
                   service={service}  
@@ -139,7 +142,7 @@ function ServiceLayout() {
               {editService ? "Edit Service" : "Add New Service"}
             </h2>
             <ServiceForm
-              onServiceCreated={refreshServiceList}
+              // onServiceCreated={refreshServiceList}
               initialData={editService}
               mode={mode}
               setIsDrawerOpen={setIsDrawerOpen}
