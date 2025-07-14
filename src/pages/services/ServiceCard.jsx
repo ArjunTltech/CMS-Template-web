@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import DeleteConfirmModal from "../../components/ui/modal/DeleteConfirmModal";
 
 function ServiceCard({ service, onDelete, onEdit }) {
+  console.log("SSs");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 

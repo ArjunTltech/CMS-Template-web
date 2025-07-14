@@ -5,43 +5,50 @@ import axiosInstance from '../../config/axios';
 import { Bell, Clock, X, CheckCircle, AlertCircle, Info, Mail } from 'lucide-react';
 
 const Notification = () => {
-  const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState([{
+        "id": "30afce75-0a46-4018-9b77-b9698bf953a4",
+        "subject": "New Contact Enquiry",
+        "message": "You have an enquiry from \tTest User",
+        "isRead": false,
+        "createdAt": "2025-05-20T05:49:42.903Z",
+        "updatedAt": "2025-05-20T05:49:42.903Z"
+    }]);
   const [filter, setFilter] = useState('all');
   const socket = useSocket();
   const NOTIFICATIONS_LIMIT = 15;
 
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        const response = await axiosInstance.get('notification/get-all-notifications');
-        const sortedNotifications = response.data
-          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-          .slice(0, NOTIFICATIONS_LIMIT); // Limit to first 15 notifications
-        setNotifications(sortedNotifications);
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
-        toast.error('Failed to fetch notifications');
-      }
-    };
+  // useEffect(() => {
+  //   const fetchNotifications = async () => {
+  //     try {
+  //       const response = await axiosInstance.get('notification/get-all-notifications');
+  //       const sortedNotifications = response.data
+  //         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+  //         .slice(0, NOTIFICATIONS_LIMIT); // Limit to first 15 notifications
+  //       setNotifications(sortedNotifications);
+  //     } catch (error) {
+  //       console.error('Error fetching notifications:', error);
+  //       toast.error('Failed to fetch notifications');
+  //     }
+  //   };
 
-    fetchNotifications();
+  //   fetchNotifications();
 
-    if (socket) {
-      socket.on('new-notification', (notification) => {
-        console.log('New notification received:', notification);
-        setNotifications((prevNotifications) => {
-          const newNotifications = [notification, ...prevNotifications];
-          return newNotifications.slice(0, NOTIFICATIONS_LIMIT);
-        });
-      });
-    }
+  //   if (socket) {
+  //     socket.on('new-notification', (notification) => {
+  //       console.log('New notification received:', notification);
+  //       setNotifications((prevNotifications) => {
+  //         const newNotifications = [notification, ...prevNotifications];
+  //         return newNotifications.slice(0, NOTIFICATIONS_LIMIT);
+  //       });
+  //     });
+  //   }
 
-    return () => {
-      if (socket) {
-        socket.off('new-notification');
-      }
-    };
-  }, [socket]);
+  //   return () => {
+  //     if (socket) {
+  //       socket.off('new-notification');
+  //     }
+  //   };
+  // }, [socket]);
 
   const markAsRead = async (notificationId) => {
     try {
