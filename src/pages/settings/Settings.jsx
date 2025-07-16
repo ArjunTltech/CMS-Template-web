@@ -179,12 +179,12 @@ const Settings = () => {
       </Card> */}
 
       {/* Account Settings */}
-      <Card className="p-6 mb-6">
+      {/* <Card className="p-6 mb-6">
         <h2 className="text-lg font-semibold mb-4 flex items-center">
           <Database className="w-5 h-5 mr-2" />
           Data & Storage
         </h2>
-        <div className="space-y-4">
+        <div className="space-y-4"> */}
           {/* <div className="flex items-center justify-between">
             <div>
               <p className="font-medium">Clear Cache</p>
@@ -192,7 +192,7 @@ const Settings = () => {
             </div>
             <Button variant="outline">Clear</Button>
           </div> */}
-          <div>
+          {/* <div>
             <p className="text-sm  mb-2">Storage Usage</p>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
@@ -207,7 +207,7 @@ const Settings = () => {
             </p>
           </div>
         </div>
-      </Card>
+      </Card> */}
 
       {/* Save Button */}
       {/* <div className="flex justify-end">

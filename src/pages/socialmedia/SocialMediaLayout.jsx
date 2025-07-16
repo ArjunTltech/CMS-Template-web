@@ -5,18 +5,71 @@ import {
   Share2, 
   Youtube,
   Linkedin,
-  Link as LinkIcon,
+  Link,
   CheckCircle,
   XCircle,
   Globe,
   Plus,
   Loader
 } from 'lucide-react';
-import axiosInstance from '../../config/axios';
-import { toast } from 'react-toastify';
-import playNotificationSound from '../../utils/playNotification';
+import {dummySocialData} from '../../components/data/dummySocials';
+// Mock toast and notification functions
+const mockToast = {
+  success: (message) => {
+    console.log('✅ Success:', message);
+    // Create a temporary toast notification
+    const toast = document.createElement('div');
+    toast.textContent = message;
+    toast.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 12px 24px; border-radius: 8px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1); font-family: system-ui, -apple-system, sans-serif;';
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      if (document.body.contains(toast)) {
+        document.body.removeChild(toast);
+      }
+    }, 3000);
+  },
+  error: (message) => {
+    console.log('❌ Error:', message);
+    // Create a temporary toast notification
+    const toast = document.createElement('div');
+    toast.textContent = message;
+    toast.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #ef4444; color: white; padding: 12px 24px; border-radius: 8px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1); font-family: system-ui, -apple-system, sans-serif;';
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      if (document.body.contains(toast)) {
+        document.body.removeChild(toast);
+      }
+    }, 3000);
+  }
+};
+
+const mockPlayNotificationSound = () => {
+  console.log('🔊 Playing notification sound');
+  // Create a simple beep sound using Web Audio API
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = 800;
+    oscillator.type = 'sine';
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.1);
+  } catch (error) {
+    console.log('Audio not supported');
+  }
+};
 
 const SocialMediaLayout = () => {
+  // Dummy data
+  const [socialDataStore, setSocialDataStore] = useState(dummySocialData  );
+
   // State for managing social links
   const [displayedLinks, setDisplayedLinks] = useState({});
   const [availableLinks, setAvailableLinks] = useState({});
@@ -24,7 +77,7 @@ const SocialMediaLayout = () => {
   const [error, setError] = useState(null);
   const [editing, setEditing] = useState(null);
   const [newLink, setNewLink] = useState("");
-  const [activeSocialCount, setActiveSocialCount] = useState()
+  const [activeSocialCount, setActiveSocialCount] = useState(0);
   const [showAddLinkModal, setShowAddLinkModal] = useState(false);
   // Confirmation modals
   const [showStatusConfirmation, setShowStatusConfirmation] = useState(false);
@@ -44,12 +97,44 @@ const SocialMediaLayout = () => {
     linkedin: <Linkedin className="w-6 h-6 text-blue-700" />
   };
 
+  // Mock API functions
+  const mockAxiosInstance = {
+    get: (url) => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            data: {
+              success: true,
+              data: socialDataStore
+            }
+          });
+        }, 1000);
+      });
+    },
+    put: (url, data) => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          const id = parseInt(url.split('/').pop());
+          setSocialDataStore(prev => prev.map(item => 
+            item.id === id ? { ...item, ...data, updatedAt: new Date().toISOString() } : item
+          ));
+          resolve({
+            data: {
+              success: true,
+              message: "Updated successfully"
+            }
+          });
+        }, 500);
+      });
+    }
+  };
+
   // Fetch social links from API
   useEffect(() => {
     const fetchSocialLinks = async () => {
       try {
         setLoading(true);
-        const response = await axiosInstance.get("/social/get-social");
+        const response = await mockAxiosInstance.get("/social/get-social");
         const activeLinks = {};
         const inactiveLinks = {};
         // Directly calculate active count from fetched data
@@ -76,7 +161,7 @@ const SocialMediaLayout = () => {
 
         setDisplayedLinks(activeLinks);
         setAvailableLinks(inactiveLinks);
-        setActiveSocialCount(totalActiveSocialCount)
+        setActiveSocialCount(totalActiveSocialCount);
         setError(null);
       } catch (err) {
         setError("Failed to load social media links");
@@ -87,8 +172,7 @@ const SocialMediaLayout = () => {
     };
 
     fetchSocialLinks();
-  }, []);
-
+  }, [socialDataStore]);
 
   const handleEditClick = (platform) => {
     setEditing(platform);
@@ -107,7 +191,7 @@ const SocialMediaLayout = () => {
       const currentEntry = displayedLinks[editing];
 
       // Make the API call to update with id in URL
-      const response = await axiosInstance.put(
+      const response = await mockAxiosInstance.put(
         `/social/update-social/${currentEntry.id}`,
         {
           platform: currentEntry.name,
@@ -126,14 +210,14 @@ const SocialMediaLayout = () => {
             lastChecked: new Date().toISOString().split('T')[0]
           }
         }));
-        playNotificationSound();
-        toast.success("Social media link updated successfully!");
+        mockPlayNotificationSound();
+        mockToast.success("Social media link updated successfully!");
       } else {
         throw new Error(response.data.message || "Failed to update");
       }
     } catch (error) {
       console.error("Error updating social media link:", error);
-      toast.error("Failed to update social media link. Please try again.");
+      mockToast.error("Failed to update social media link. Please try again.");
     } finally {
       setIsSaving(false);
       setEditing(null);
@@ -165,7 +249,7 @@ const SocialMediaLayout = () => {
       const currentLink = displayedLinks[platform];
 
       // Make API call to update status
-      const response = await axiosInstance.put(
+      const response = await mockAxiosInstance.put(
         `/social/update-social/${currentLink.id}`,
         {
           platform: currentLink.name,
@@ -197,14 +281,14 @@ const SocialMediaLayout = () => {
         // Decrement active social count
         setActiveSocialCount(prev => prev - 1);
 
-        playNotificationSound();
-        toast.success("Social media set to inactive!");
+        mockPlayNotificationSound();
+        mockToast.success("Social media set to inactive!");
       } else {
         throw new Error(response.data.message || "Failed to update status");
       }
     } catch (error) {
       console.error("Error updating social media status:", error);
-      toast.error("Failed to update social media status. Please try again.");
+      mockToast.error("Failed to update social media status. Please try again.");
     } finally {
       // Close confirmation modal and reset states
       setIsDeactivating(false);
@@ -230,7 +314,7 @@ const SocialMediaLayout = () => {
       const currentLink = availableLinks[platform];
 
       // Make API call to update status to active
-      const response = await axiosInstance.put(
+      const response = await mockAxiosInstance.put(
         `/social/update-social/${currentLink.id}`,
         {
           platform: currentLink.name,
@@ -262,14 +346,14 @@ const SocialMediaLayout = () => {
         // Increment active social count
         setActiveSocialCount(prev => prev + 1);
 
-        playNotificationSound();
-        toast.success("Social media activated successfully!");
+        mockPlayNotificationSound();
+        mockToast.success("Social media activated successfully!");
       } else {
         throw new Error(response.data.message || "Failed to activate");
       }
     } catch (error) {
       console.error("Error activating social media:", error);
-      toast.error("Failed to activate social media. Please try again.");
+      mockToast.error("Failed to activate social media. Please try again.");
     } finally {
       // Close confirmation modal and reset states
       setIsActivating(false);
@@ -281,9 +365,9 @@ const SocialMediaLayout = () => {
   const copyToClipboard = async (url) => {
     try {
       await navigator.clipboard.writeText(url);
-      toast.success("Link copied to clipboard!");
+      mockToast.success("Link copied to clipboard!");
     } catch (err) {
-      toast.error("Failed to copy link");
+      mockToast.error("Failed to copy link");
     }
   };
 
@@ -321,13 +405,13 @@ const SocialMediaLayout = () => {
   return (
     <div className="card w-full bg-base-200 shadow-xl">
       <div className="card-body">
-        <div className=" flex items-center justify-between">
-          <div className='space-y-1'>
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
             <h1 className="card-title flex items-center gap-2 text-base md:text-2xl text-neutral-content">
               <Globe className="w-6 h-6 text-accent" />
               Social Media Management
             </h1>
-            <p className='ml-8'>Active Social Media : {activeSocialCount} </p>
+            <p className="ml-8">Active Social Media : {activeSocialCount}</p>
           </div>
           {Object.keys(availableLinks).length > 0 && (
             <button
@@ -389,7 +473,7 @@ const SocialMediaLayout = () => {
                                 onClick={() => copyToClipboard(details.url)}
                                 className="btn btn-ghost btn-xs"
                               >
-                                <LinkIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                                <Link className="w-3 h-3 sm:w-4 sm:h-4" />
                               </button>
                             </div>
                           )}

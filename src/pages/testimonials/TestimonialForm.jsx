@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Star } from 'lucide-react';
 import { toast } from 'react-toastify';
-import axiosInstance from '../../config/axios';
-import playNotificationSound from '../../utils/playNotification';
+import { defaultTestimonialImage } from '../../components/data/dummyTestimonials';
 
 function TestimonialForm({ onTestimonialCreated, initialData, mode, setIsDrawerOpen }) {
   const [testimonial, setTestimonial] = useState({
@@ -59,8 +58,6 @@ function TestimonialForm({ onTestimonialCreated, initialData, mode, setIsDrawerO
         return null;
     }
   };
-  
-  
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -80,7 +77,7 @@ function TestimonialForm({ onTestimonialCreated, initialData, mode, setIsDrawerO
     const ratingError = validateField('rating', testimonial.rating);
     if (ratingError) newErrors.rating = ratingError;
 
-    // If there are any errors, set them and prevent submission
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -92,20 +89,21 @@ function TestimonialForm({ onTestimonialCreated, initialData, mode, setIsDrawerO
     try {
       setIsSubmitting(true);
 
-      let response;
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      if (onTestimonialCreated) {
+        onTestimonialCreated(testimonial, mode);
+      }
+
+      // Show success toast
       if (mode === "add") {
-        response = await axiosInstance.post("/contents/testimonial", testimonial);
-        playNotificationSound()
         toast.success("Testimonial created successfully!");
-      } else if (mode === "edit" && initialData) {
-        response = await axiosInstance.put(`/contents/testimonial/${initialData.id}`, testimonial);
+      } else if (mode === "edit") {
         toast.success("Testimonial updated successfully!");
       }
 
-      if (onTestimonialCreated) {
-        onTestimonialCreated();
-      }
-
+      // Reset form for add mode
       setTestimonial({
         text: '',
         author: '',

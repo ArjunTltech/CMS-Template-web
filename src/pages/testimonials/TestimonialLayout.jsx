@@ -1,42 +1,57 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2, Star, ChevronRight, ChevronLeft, Loader } from 'lucide-react';
-import axiosInstance from '../../config/axios';
 import TestimonialForm from './TestimonialForm';
 import { toast } from 'react-toastify';
+import { testimonialsDummyData, generateNextId } from '../../components/data/dummyTestimonials';
 
 const TestimonialLayout = () => {
-  const [testimonials, setTestimonials] = useState([]);
+  const [allTestimonials, setAllTestimonials] = useState(testimonialsDummyData);
+  const [displayedTestimonials, setDisplayedTestimonials] = useState([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editTestimonial, setEditTestimonial] = useState(null);
   const [mode, setMode] = useState("add");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [testimonialToDelete, setTestimonialToDelete] = useState(null);
-  const [testimonialData, setTestimonialData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [isDeleting, setIsDeleting] = useState(false);
   const itemsPerPage = 4;
 
-  const refreshTestimonialList = useCallback(async () => {
-    try {
-      const response = await axiosInstance.get('/contents/testimonials');   
-      setTestimonialData(response.data.data);
-      
-      // Show the first page of testimonials
-      const startIndex = (currentPage - 1) * itemsPerPage;
-      const testimonialsToShow = response.data.data.slice(startIndex, startIndex + itemsPerPage);
-      setTestimonials(testimonialsToShow);
-    } catch (err) {
-      console.error('Error fetching testimonials:', err);
-      toast.error('Failed to load testimonials');
-    }
-  }, [currentPage]);
+  // Calculate pagination
+  const totalPages = Math.ceil(allTestimonials.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
 
+  // Update displayed testimonials when page or data changes
   useEffect(() => {
-    refreshTestimonialList();
-  }, [refreshTestimonialList]);
+    const testimonialsToShow = allTestimonials.slice(startIndex, endIndex);
+    setDisplayedTestimonials(testimonialsToShow);
+  }, [currentPage, allTestimonials, startIndex, endIndex]);
 
-  // Calculate total pages correctly
-  const totalPages = Math.ceil(testimonialData.length / itemsPerPage);
+  // Reset to first page if current page is out of bounds
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [currentPage, totalPages]);
+
+  const handleTestimonialCreated = (testimonialData, mode) => {
+    if (mode === "add") {
+      const newTestimonial = {
+        ...testimonialData,
+        id: generateNextId(allTestimonials),
+        image: "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=150&h=150&fit=crop&crop=face"
+      };
+      setAllTestimonials(prev => [...prev, newTestimonial]);
+    } else if (mode === "edit") {
+      setAllTestimonials(prev => 
+        prev.map(testimonial => 
+          testimonial.id === editTestimonial.id 
+            ? { ...testimonial, ...testimonialData }
+            : testimonial
+        )
+      );
+    }
+  };
 
   const handleAddNew = () => {
     setEditTestimonial(null);
@@ -53,9 +68,10 @@ const TestimonialLayout = () => {
   const handleDelete = async (id) => {
     setIsDeleting(true);
     try {
-      await axiosInstance.delete(`/contents/testimonial/${id}`);
-      // After deleting, refresh the list to update pagination
-      await refreshTestimonialList();
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setAllTestimonials(prev => prev.filter(testimonial => testimonial.id !== id));
       toast.success('Testimonial deleted successfully');
     } catch (err) {
       console.error('Error deleting testimonial:', err);
@@ -78,16 +94,9 @@ const TestimonialLayout = () => {
     }
   };
 
-  // Go to specific page
   const goToPage = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
-  
-  useEffect(() => {
-    // Update displayed testimonials when page changes
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    setTestimonials(testimonialData.slice(startIndex, startIndex + itemsPerPage));
-  }, [currentPage, testimonialData]);
   
   return (
     <div className="min-h-screen relative">
@@ -103,7 +112,7 @@ const TestimonialLayout = () => {
           <div className="md:flex space-y-2 md:space-y-0 block justify-between items-center mb-8">
             <div className="space-y-2">
               <h1 className="text-3xl font-bold text-neutral-content">Testimonials</h1>
-              <p>Total Testimonials: {testimonialData.length}</p>
+              <p>Total Testimonials: {allTestimonials.length}</p>
             </div>
             <button
               className="btn btn-primary gap-2"
@@ -115,9 +124,9 @@ const TestimonialLayout = () => {
           </div>
 
           <div className="mx-auto space-y-4">
-            {testimonials.length > 0 ? (
+            {displayedTestimonials.length > 0 ? (
               <>
-                {testimonials.map((testimonial) => (
+                {displayedTestimonials.map((testimonial) => (
                   <div key={testimonial.id} className="bg-base-200 p-4 rounded-lg flex justify-between items-center">
                     <div className="flex-1 select-none">
                       <div className="text-xl font-bold text-accent">{testimonial.author}</div>
@@ -152,7 +161,7 @@ const TestimonialLayout = () => {
                 ))}
 
                 {/* Pagination controls */}
-                {testimonialData.length > itemsPerPage && (
+                {allTestimonials.length > itemsPerPage && (
                   <div className="flex justify-center items-center space-x-2 mt-6">
                     <button 
                       onClick={goToPrevPage} 
@@ -197,7 +206,7 @@ const TestimonialLayout = () => {
           <div className="p-4 md:w-[40%] w-full sm:w-1/2 overflow-y-scroll bg-base-100 h-[80vh] text-base-content absolute bottom-4 right-4 rounded-lg shadow-lg">
             <h2 className="text-lg font-bold mb-4">{mode === "edit" ? 'Edit Testimonial' : 'Add New Testimonial'}</h2>
             <TestimonialForm
-              onTestimonialCreated={refreshTestimonialList}
+              onTestimonialCreated={handleTestimonialCreated}
               initialData={editTestimonial}
               mode={mode}
               setIsDrawerOpen={setIsDrawerOpen}

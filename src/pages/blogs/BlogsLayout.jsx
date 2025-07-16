@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Search } from "lucide-react";
 import BlogPostForm from "./CreateForm";
 import BlogCard from "./BlogCard";
-import axiosInstance from "../../config/axios";
+import { dummyBlogs, generateNewId } from "../../components/data/dummyBlogs";
 
 function BlogsLayout() {
   const [blogs, setBlogs] = useState([]);
@@ -12,33 +12,16 @@ function BlogsLayout() {
   const [editBlog, setEditBlog] = useState(null);
   const [mode, setMode] = useState("add");
   const [searchQuery, setSearchQuery] = useState("");
-  const [blogCount, setBlogCount] = useState(0);
 
-  const refreshBlogList = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await axiosInstance.get("/blog/get-all-blogs");
-      setBlogs(response.data.data);
-      const totalBlogCount = response.data.data.length;
-      console.log(totalBlogCount);
-      setBlogCount(totalBlogCount);
-    } catch (err) {
-      setError("Failed to load blogs");
-      console.error("Error fetching blogs:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
+  // Initialize with dummy data
   useEffect(() => {
-    const fetchBlogs = async () => {
+    const initializeBlogs = async () => {
       try {
         setLoading(true);
-        const response = await axiosInstance.get("/blog/get-all-blogs");
-        setBlogs(response.data.data);
-        const totalBlogCount = response.data.data.length;
-        console.log(totalBlogCount);
-        setBlogCount(totalBlogCount);
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        setBlogs(dummyBlogs);
       } catch (err) {
         setError("Failed to load blogs");
         console.error("Error fetching blogs:", err);
@@ -47,15 +30,11 @@ function BlogsLayout() {
       }
     };
 
-    fetchBlogs();
+    initializeBlogs();
   }, []);
 
   const handleDeleteBlog = (blogId) => {
-    setBlogs((prevBlogs) => {
-      const updatedBlogs = prevBlogs.filter((blog) => blog.id !== blogId);
-      setBlogCount(updatedBlogs.length);
-      return updatedBlogs;
-    });
+    setBlogs((prevBlogs) => prevBlogs.filter((blog) => blog.id !== blogId));
   };
 
   const handleEditBlog = (blog) => {
@@ -65,15 +44,39 @@ function BlogsLayout() {
   };
 
   const handleAddNewPost = () => {
-    setEditBlog("");
+    setEditBlog(null);
     setMode("add");
     setIsDrawerOpen(true);
   };
 
+  // Handle blog creation/update from form
+  const handleBlogSubmit = (blogData) => {
+    if (mode === "add") {
+      const newBlog = {
+        ...blogData,
+        id: generateNewId(),
+      };
+      setBlogs(prevBlogs => [...prevBlogs, newBlog]);
+    } else if (mode === "edit" && editBlog) {
+      setBlogs(prevBlogs => 
+        prevBlogs.map(blog => 
+          blog.id === editBlog.id ? { ...blog, ...blogData } : blog
+        )
+      );
+    }
+    setIsDrawerOpen(false);
+    setEditBlog(null);
+  };
+
   const filteredBlogs = blogs.filter((blog) =>
     blog.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    blog.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    blog.excerpt?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleDrawerClose = () => {
+    setIsDrawerOpen(false);
+    setEditBlog(null);
+  };
 
   return (
     <div className="min-h-screen relative">
@@ -84,7 +87,7 @@ function BlogsLayout() {
           type="checkbox"
           className="drawer-toggle"
           checked={isDrawerOpen}
-          onChange={() => setIsDrawerOpen(!isDrawerOpen)}
+          onChange={handleDrawerClose}
         />
         <div className="drawer-content">
           {/* Header Section */}
@@ -101,10 +104,9 @@ function BlogsLayout() {
           {/* Blog Count Display */}
           <div className="mb-6">
             <p className="text-sm text-neutral-content opacity-80">
-              {loading ? "Loading blogs..." : `Total Blogs: ${blogCount}`}
+              {loading ? "Loading blogs..." : `Total Blogs: ${blogs.length}`}
             </p>
           </div>
-
 
           {/* Search and Filter Section */}
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
@@ -118,11 +120,6 @@ function BlogsLayout() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            {/* <select className="select select-bordered focus:outline-none bg-base-100 text-neutral-content">
-              <option>Latest</option>
-              <option>Most Viewed</option>
-              <option>Most Shared</option>
-            </select> */}
           </div>
 
           {/* Blog Grid */}
@@ -134,7 +131,7 @@ function BlogsLayout() {
                   className="card bg-base-100 animate-pulse transition-all duration-300 ease-in-out transform hover:scale-105"
                 >
                   {/* Image Skeleton */}
-                  <div className="h-48 bg-base-100 rounded-3xl transition-colors duration-300"></div>
+                  <div className="h-48 bg-base-200 rounded-3xl transition-colors duration-300"></div>
 
                   {/* Content Skeleton */}
                   <div className="card-body p-4 space-y-3">
@@ -153,7 +150,15 @@ function BlogsLayout() {
               ))}
             </div>
           ) : error ? (
-            <div className="text-center text-red-500">{error}</div>
+            <div className="text-center text-red-500 py-10">
+              <p>{error}</p>
+              <button 
+                className="btn btn-primary mt-4"
+                onClick={() => window.location.reload()}
+              >
+                Try Again
+              </button>
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredBlogs.length > 0 ? (
@@ -166,8 +171,22 @@ function BlogsLayout() {
                   />
                 ))
               ) : (
-                <div className="col-span-3 text-center py-10">
-                  <p className="text-neutral-content opacity-70">No blogs found matching your search criteria.</p>
+                <div className="col-span-full text-center py-10">
+                  <div className="text-neutral-content opacity-70">
+                    {searchQuery ? (
+                      <>
+                        <p>No blogs found matching "{searchQuery}"</p>
+                        <button 
+                          className="btn btn-link text-primary"
+                          onClick={() => setSearchQuery("")}
+                        >
+                          Clear search
+                        </button>
+                      </>
+                    ) : (
+                      <p>No blogs available. Create your first blog post!</p>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -177,12 +196,20 @@ function BlogsLayout() {
         {/* Drawer Sidebar */}
         <div className="drawer-side">
           <label htmlFor="new-post-drawer" className="drawer-overlay"></label>
-          <div className="p-4 md:w-[40%] w-full sm:w-1/2 overflow-y-scroll bg-base-100 h-[85vh] text-base-content absolute bottom-4 right-4 rounded-lg shadow-lg">
-            <h2 className="text-lg font-bold mb-4">
-              {editBlog ? "Edit Post" : "Add New Blog Post"}
-            </h2>
+          <div className="p-4 md:w-[40%] w-full sm:w-1/2 overflow-y-auto bg-base-100 h-[90vh] text-base-content absolute bottom-2 right-2 rounded-lg shadow-lg">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold">
+                {editBlog ? "Edit Post" : "Add New Blog Post"}
+              </h2>
+              <button
+                className="btn btn-sm btn-circle btn-ghost"
+                onClick={handleDrawerClose}
+              >
+                ✕
+              </button>
+            </div>
             <BlogPostForm
-              onBlogCreated={refreshBlogList}
+              onBlogCreated={handleBlogSubmit}
               initialData={editBlog}
               mode={mode}
               setIsDrawerOpen={setIsDrawerOpen}
