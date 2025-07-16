@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import axiosInstance from '../../config/axios';
 import playNotificationSound from '../../utils/playNotification';
 
 function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs }) {
@@ -11,31 +10,24 @@ function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs }) {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Log faqs prop to check if it's being properly passed
   useEffect(() => {
-
     if (mode === "edit" && initialData) {
       setFaq({
         question: initialData.question || '',
         answer: initialData.answer || ''
       });
-      console.log("Edit mode initialData:", initialData);
     } else if (mode === "add") {
       setFaq({
         question: '',
         answer: ''
       });
     }
-    // Reset errors and submission state
     setErrors({});
     setIsSubmitting(false);
   }, [mode, initialData, faqs]);
 
   const validateField = (name, value) => {
-    console.log(`Validating ${name} with value: "${value}"`);
-    console.log("Available FAQs for validation:", faqs);
-    
-    const wordCount = value.trim().split(/\s+/).length; // Count words
+    const wordCount = value.trim().split(/\s+/).length;
     
     switch (name) {
       case 'question':
@@ -43,25 +35,17 @@ function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs }) {
           return "Question must be at least 5 characters long";
         }
         
-        // Check if the question is a duplicate (only for new FAQs or if the question has changed)
         if (faqs && Array.isArray(faqs)) {
-          console.log("Checking for duplicates among", faqs.length, "existing FAQs");
-          
           const duplicates = faqs.filter(
             (existingFAQ) => 
               existingFAQ.question.trim().toLowerCase() === value.trim().toLowerCase() &&
-              // Don't flag as duplicate if it's the same FAQ being edited
               (mode !== "edit" || existingFAQ.id !== initialData?.id)
           );
           
           if (duplicates.length > 0) {
-            console.log("Duplicate found:", duplicates);
             return "This question already exists. Please enter a different question.";
           }
-        } else {
-          console.log("Cannot check for duplicates - faqs is not available or not an array");
         }
-        
         return null;
   
       case 'answer':
@@ -74,80 +58,33 @@ function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs }) {
     }
   };
   
-  const handleSubmit = async (event) => {
+  const handleSubmit = (event) => {
     event.preventDefault();
-    console.log("Form submission initiated");
 
-    // Validate all fields
     const newErrors = {};
-    
     const questionError = validateField('question', faq.question);
     if (questionError) newErrors.question = questionError;
 
     const answerError = validateField('answer', faq.answer);
     if (answerError) newErrors.answer = answerError;
 
-    // If there are any errors, set them and prevent submission
     if (Object.keys(newErrors).length > 0) {
-      console.log("Validation errors found:", newErrors);
       setErrors(newErrors);
       return;
     }
 
-    // Prevent multiple submissions
-    if (isSubmitting) {
-      console.log("Submission already in progress");
-      return;
-    }
+    if (isSubmitting) return;
 
-    try {
-      setIsSubmitting(true);
-      console.log("Submitting FAQ:", faq);
+    setIsSubmitting(true);
 
-      let response;
-      if (mode === "add") {
-        // First get the current FAQs to determine the next order
-        const faqsResponse = await axiosInstance.get('/qna/get-faqs');
-        const currentFAQs = faqsResponse.data.data || [];
-        const nextOrder = currentFAQs.length + 1;
-
-        const newFAQ = {
-          ...faq,
-          order: nextOrder
-        };
-
-        console.log("Creating new FAQ with order:", nextOrder);
-        response = await axiosInstance.post("/qna/create-faq", newFAQ);
-        playNotificationSound()
-        toast.success("FAQ created successfully!");
-      } else if (mode === "edit" && initialData) {
-        const updatedFAQ = {
-          ...faq,
-          order: initialData.order
-        };
-        console.log("Updating FAQ with ID:", initialData.id);
-        response = await axiosInstance.put(`/qna/update-faq/${initialData.id}`, updatedFAQ);
-        playNotificationSound()
-        toast.success("FAQ updated successfully!");
-      }
-
-      if (onFAQCreated) {
-        console.log("Calling onFAQCreated callback");
-        onFAQCreated();
-      }
-
-      setFaq({
-        question: '',
-        answer: ''
+    setTimeout(() => {
+      onFAQCreated({
+        question: faq.question.trim(),
+        answer: faq.answer.trim()
       });
-      setIsDrawerOpen(false);
-    } catch (error) {
-      console.error("Error handling FAQ:", error);
-      const errorMessage = error.response?.data?.message || "Failed to save FAQ. Please try again.";
-      toast.error(errorMessage);
-    } finally {
+      playNotificationSound();
       setIsSubmitting(false);
-    }
+    }, 500);
   };
 
   return (
@@ -164,12 +101,9 @@ function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs }) {
           onChange={(e) => {
             const newQuestion = e.target.value;
             setFaq({ ...faq, question: newQuestion });
-            
-            // Validate and clear error if valid
-            const questionError = validateField('question', newQuestion);
             setErrors(prev => ({
               ...prev,
-              question: questionError
+              question: validateField('question', newQuestion)
             }));
           }}
         />
@@ -188,12 +122,9 @@ function FAQForm({ onFAQCreated, initialData, mode, setIsDrawerOpen, faqs }) {
           onChange={(e) => {
             const newAnswer = e.target.value;
             setFaq({ ...faq, answer: newAnswer });
-            
-            // Validate and clear error if valid
-            const answerError = validateField('answer', newAnswer);
             setErrors(prev => ({
               ...prev,
-              answer: answerError
+              answer: validateField('answer', newAnswer)
             }));
           }}
         ></textarea>

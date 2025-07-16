@@ -1,10 +1,8 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { toast } from "react-toastify";
-import axiosInstance from "../../config/axios";
-import playNotificationSound from "../../utils/playNotification";
+import { v4 as uuidv4 } from 'uuid';
 
-function ServiceForm({ onServiceCreated, initialData, mode, setIsDrawerOpen }) {
+function ServiceForm({ onServiceSubmit, initialData, mode, setIsDrawerOpen }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [tagline, setTagline] = useState("");
@@ -21,53 +19,37 @@ function ServiceForm({ onServiceCreated, initialData, mode, setIsDrawerOpen }) {
       setTitle(initialData.title || "");
       setDescription(initialData.shortDescription || "");
       setTagline(initialData.tagline || "");
-      setTaglineDescription(initialData.taglinedescription || "")
+      setTaglineDescription(initialData.taglinedescription || "");
       setPoints(initialData.points || [""]);
       setImagePreview(initialData.image || null);
     } else {
       setTitle("");
       setDescription("");
       setTagline("");
-      setTaglineDescription("")
+      setTaglineDescription("");
       setPoints([""]);
       setImageFile(null);
       setImagePreview(null);
     }
-    // Reset errors when mode or initialData changes
     setErrors({});
     setIsSubmitting(false);
   }, [mode, initialData]);
 
-  const validateField = (name, value, mode) => {
+  const validateField = (name, value) => {
     switch (name) {
       case 'title':
-        return value.trim().length >= 3 
-          ? null 
-          : "Title must be at least 3 characters long";
+        return value.trim().length >= 3 ? null : "Title must be at least 3 characters long";
       case 'description':
-        return value.trim().length >= 10 
-          ? null 
-          : "Description must be at least 10 characters long";
+        return value.trim().length >= 10 ? null : "Description must be at least 10 characters long";
       case 'points':
-        return value.every(point => point.trim().length >= 5)
-          ? null
-          : "Each point must be at least 5 characters long";
+        return value.every(point => point.trim().length >= 5) ? null : "Each point must be at least 5 characters long";
       case 'image':
-        // Skip image validation in edit mode if no new image is provided
-        if (mode === 'edit' && (value === undefined || value === null)) {
-          return null;
-        }
-        return value 
-          ? null 
-          : "Image is required";
+        if (mode === 'edit' && !value) return null;
+        return value ? null : "Image is required";
       case 'tagline':
-        return value.trim().length === 0 || value.trim().length >= 5
-          ? null
-          : "Tagline must be at least 5 characters long";
+        return value.trim().length === 0 || value.trim().length >= 5 ? null : "Tagline must be at least 5 characters long";
       case 'taglinedescription':
-        return value.trim().length === 0 || value.trim().length >= 10
-          ? null
-          : "Tagline description must be at least 10 characters long";
+        return value.trim().length === 0 || value.trim().length >= 10 ? null : "Tagline description must be at least 10 characters long";
       default:
         return null;
     }
@@ -76,9 +58,8 @@ function ServiceForm({ onServiceCreated, initialData, mode, setIsDrawerOpen }) {
   const handleImageChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-      // Validate image file
       const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
-      const maxSize = 5 * 1024 * 1024; // 5MB
+      const maxSize = 5 * 1024 * 1024;
 
       if (!validTypes.includes(file.type)) {
         toast.error("Invalid file type. Please upload JPEG, PNG, or GIF.");
@@ -92,15 +73,7 @@ function ServiceForm({ onServiceCreated, initialData, mode, setIsDrawerOpen }) {
 
       setImageFile(file);
       setImagePreview(URL.createObjectURL(file));
-      
-      // Clear any previous image errors
-      setErrors(prev => {
-        const { image, ...rest } = prev;
-        return rest;
-      });
-    } else {
-      setImageFile(null);
-      setImagePreview(null);
+      setErrors(prev => ({ ...prev, image: null }));
     }
   };
 
@@ -108,26 +81,15 @@ function ServiceForm({ onServiceCreated, initialData, mode, setIsDrawerOpen }) {
     setImageFile(null);
     setImagePreview(null);
     if (inputRef.current) inputRef.current.value = "";
-    
-    // Set image error when removed
-    setErrors(prev => ({
-      ...prev,
-      image: "Image is required"
-    }));
-    
+    setErrors(prev => ({ ...prev, image: "Image is required" }));
   };
 
   const handlePointChange = (index, value) => {
     const newPoints = [...points];
     newPoints[index] = value;
     setPoints(newPoints);
-    
-    // Validate points
-    const pointError = validateField('points', newPoints,mode);
-    setErrors(prev => ({
-      ...prev,
-      points: pointError
-    }));
+    const pointError = validateField('points', newPoints);
+    setErrors(prev => ({ ...prev, points: pointError }));
   };
 
   const addPoint = () => setPoints([...points, ""]);
@@ -136,96 +98,68 @@ function ServiceForm({ onServiceCreated, initialData, mode, setIsDrawerOpen }) {
     if (points.length > 1) {
       const newPoints = points.filter((_, i) => i !== index);
       setPoints(newPoints);
-      
-      // Revalidate points
-      const pointError = validateField('points', newPoints,mode);
-      setErrors(prev => ({
-        ...prev,
-        points: pointError
-      }));
+      const pointError = validateField('points', newPoints);
+      setErrors(prev => ({ ...prev, points: pointError }));
     }
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    // Perform validation
     const newErrors = {};
-    
-    // Validate each field
-    const titleError = validateField('title', title);
-    if (titleError) newErrors.title = titleError;
+    const fieldsToValidate = [
+      { name: 'title', value: title },
+      { name: 'description', value: description },
+      { name: 'points', value: points },
+      { name: 'image', value: imageFile || imagePreview },
+      { name: 'tagline', value: tagline },
+      { name: 'taglinedescription', value: taglinedescription }
+    ];
 
-    const descriptionError = validateField('description', description,mode);
-    if (descriptionError) newErrors.description = descriptionError;
+    fieldsToValidate.forEach(({ name, value }) => {
+      const error = validateField(name, value);
+      if (error) newErrors[name] = error;
+    });
 
-    const pointsError = validateField('points', points,mode);
-    if (pointsError) newErrors.points = pointsError;
-
-    const imageError = validateField('image', imageFile,mode);
-    if (imageError) newErrors.image = imageError;
-
-    const taglineError = validateField('tagline', tagline,mode);
-    if (taglineError) newErrors.tagline = taglineError;
-
-    const taglineDescriptionError = validateField('taglinedescription', taglinedescription,mode);
-    if (taglineDescriptionError) newErrors.taglinedescription = taglineDescriptionError;
-
-    // If there are any errors, set them and prevent submission
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
-    // Prevent multiple submissions
     if (isSubmitting) return;
 
     try {
       setIsSubmitting(true);
 
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("shortDescription", description);
-      formData.append("tagline", tagline);
-      formData.append("taglineDescription", taglinedescription);
-      formData.append("servicePoints", JSON.stringify(points));
+      const serviceData = {
+        id: mode === "edit" ? initialData.id : uuidv4(),
+        title,
+        shortDescription: description,
+        tagline,
+        taglinedescription,
+        points,
+        image: imagePreview || initialData?.image,
+        createdAt: mode === "edit" ? initialData.createdAt : new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        servicePoints: points.map(point => ({
+          id: uuidv4(),
+          text: point,
+          serviceId: mode === "edit" ? initialData.id : uuidv4()
+        }))
+      };
 
-      if (imageFile) {
-        formData.append("image", imageFile);
-      }
+      onServiceSubmit(serviceData, mode);
+      toast.success(`Service ${mode === "add" ? "added" : "updated"} successfully!`);
 
-      let response;
       if (mode === "add") {
-        if(!imagePreview)return
-        response = await axiosInstance.post("/service/create-service", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-        playNotificationSound()
-        toast.success("Service added successfully!");
-      } else if (mode === "edit" && initialData) {
-        if(!imagePreview)return
-
-        response = await axiosInstance.put(
-          `/service/update-service/${initialData.id}`,
-          formData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-          }
-        );
-        toast.success("Service updated successfully!");
+        setTitle("");
+        setDescription("");
+        setTagline("");
+        setTaglineDescription("");
+        setPoints([""]);
+        setImageFile(null);
+        setImagePreview(null);
       }
-
-      if (onServiceCreated) onServiceCreated();
-
-      // Reset form on success
-      setTitle("");
-      setDescription("");
-      setTagline("");
-      setTaglineDescription("")
-      setPoints([""]);
-      setImageFile(null);
-      setImagePreview(null);
-      setIsDrawerOpen(false);
     } catch (error) {
       console.error("Error handling service:", error);
       toast.error("Failed to save service. Please try again.");
@@ -248,11 +182,7 @@ function ServiceForm({ onServiceCreated, initialData, mode, setIsDrawerOpen }) {
           value={title}
           onChange={(e) => {
             setTitle(e.target.value);
-            const titleError = validateField('title', e.target.value,mode);
-            setErrors(prev => ({
-              ...prev,
-              title: titleError
-            }));
+            setErrors(prev => ({ ...prev, title: validateField('title', e.target.value) }));
           }}
         />
         {errors.title && <p className="text-error text-sm mt-1">{errors.title}</p>}
@@ -269,11 +199,7 @@ function ServiceForm({ onServiceCreated, initialData, mode, setIsDrawerOpen }) {
           value={description}
           onChange={(e) => {
             setDescription(e.target.value);
-            const descriptionError = validateField('description', e.target.value,mode);
-            setErrors(prev => ({
-              ...prev,
-              description: descriptionError
-            }));
+            setErrors(prev => ({ ...prev, description: validateField('description', e.target.value) }));
           }}
         ></textarea>
         {errors.description && <p className="text-error text-sm mt-1">{errors.description}</p>}
@@ -289,11 +215,7 @@ function ServiceForm({ onServiceCreated, initialData, mode, setIsDrawerOpen }) {
           value={tagline}
           onChange={(e) => {
             setTagline(e.target.value);
-            const taglineError = validateField('tagline', e.target.value,mode);
-            setErrors(prev => ({
-              ...prev,
-              tagline: taglineError
-            }));
+            setErrors(prev => ({ ...prev, tagline: validateField('tagline', e.target.value) }));
           }}
         />
         {errors.tagline && <p className="text-error text-sm mt-1">{errors.tagline}</p>}
@@ -308,11 +230,7 @@ function ServiceForm({ onServiceCreated, initialData, mode, setIsDrawerOpen }) {
           value={taglinedescription}
           onChange={(e) => {
             setTaglineDescription(e.target.value);
-            const taglineDescriptionError = validateField('taglinedescription', e.target.value,mode);
-            setErrors(prev => ({
-              ...prev,
-              taglinedescription: taglineDescriptionError
-            }));
+            setErrors(prev => ({ ...prev, taglinedescription: validateField('taglinedescription', e.target.value) }));
           }}
           rows={2}
         ></textarea>
@@ -354,7 +272,7 @@ function ServiceForm({ onServiceCreated, initialData, mode, setIsDrawerOpen }) {
       <div className="form-control mb-4">
         <label className="label">
           <span className="label-text">Normal Image <span className="text-error"> *</span>
-          <span> ( JPG/PNG,-1024×768 px, less than 2 MB, no high-res files.)</span>
+          <span> ( JPG/PNG,-1024×768 px, less than 2 MB, no high-res files.)</span>
           </span>
         </label>
         <div

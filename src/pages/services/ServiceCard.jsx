@@ -1,19 +1,16 @@
 import { Pencil, Trash2 } from "lucide-react";
 import React, { useState } from "react";
-import axiosInstance from "../../config/axios";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
 import DeleteConfirmModal from "../../components/ui/modal/DeleteConfirmModal";
 
 function ServiceCard({ service, onDelete, onEdit }) {
-  console.log("SSs");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleDelete = async () => {
     setIsLoading(true);
     try {
-      await axiosInstance.delete(`/service/delete-service/${service.id}`); // ✅ Correct API endpoint
       onDelete(service.id);
       toast.success("Service deleted successfully!");
     } catch (error) {
@@ -38,7 +35,7 @@ function ServiceCard({ service, onDelete, onEdit }) {
 
         <div className="card-body p-4">
           <h2 className="card-title text-neutral-content text-lg font-bold">
-            {service.title}  {/* Assuming `provider` instead of `author` */}
+            {service.title}
           </h2>
           <p className="text-neutral-content text-sm">{service.shortDescription}</p>
           <div className="flex items-center gap-4 mt-2">
@@ -69,7 +66,7 @@ function ServiceCard({ service, onDelete, onEdit }) {
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDelete}
-        isLoading={isLoading} 
+        isLoading={isLoading}
         title="Delete Service"
         message="Are you sure you want to delete this service?"
       />
