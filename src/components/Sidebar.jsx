@@ -230,7 +230,7 @@ function Sidebar({ isOpen, onClose, isCollapsed, setIsCollapsed }) {
                 <div className="flex items-center justify-between h-16 px-3">
                     <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isCollapsed ? 'w-0' : 'w-40'
                         }`}>
-                        <img src="https://www.vsgenxsolutions.com/_next/static/media/logo-1.ded65dd8.png" alt="" className="h-10 w-auto rounded-sm" />
+                        <img src="src/images/demologo.png" alt="" className="h-10 w-auto rounded-sm" />
                     </div>
 
                     <button

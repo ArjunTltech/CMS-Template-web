@@ -19,6 +19,7 @@ import {
   AlertTriangle
 } from "lucide-react";
 import playNotificationSound from "../../utils/playNotification";
+import dummyEnquiries from "../data/dummyEnquiry";
 
 const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, itemName }) => {
   if (!isOpen) return null;
@@ -67,7 +68,7 @@ const EnquiryItem = ({ enquiry, onStatusChange, onDelete }) => {
         onStatusChange(enquiry.id, "read");
       } catch (error) {
         console.error("Failed to update status", error);
-        toast.error("Failed to mark enquiry as read");
+        // toast.error("Failed to mark enquiry as read");
       }
     }
     setShowMessage(!showMessage);
@@ -76,9 +77,9 @@ const EnquiryItem = ({ enquiry, onStatusChange, onDelete }) => {
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      await axiosInstance.delete(`/enquiries/delete-enquiry/${enquiry.id}`);
+      // For dummy data, we'll just call onDelete which will be handled by the parent
       onDelete(enquiry.id);
-      playNotificationSound()
+      playNotificationSound();
       toast.success("Enquiry deleted successfully!");
     } catch (error) {
       console.error("Error deleting Enquiry:", error);
@@ -88,7 +89,6 @@ const EnquiryItem = ({ enquiry, onStatusChange, onDelete }) => {
       setShowDeleteModal(false);
     }
   };
-
   return (
     <>
       <div className="card bg-base-200 shadow-lg hover:shadow-xl transition-all duration-200 relative">
@@ -189,7 +189,7 @@ const EnquiriesFilter = ({ onFilterChange, onDateRangeChange, filters, isVisible
   };
 
   const handleEndDateChange = (date) => {
-    
+
     setLocalEndDate(date);
     // Only trigger date range change if the date is valid
     if (isValid(date)) {
@@ -207,25 +207,25 @@ const EnquiriesFilter = ({ onFilterChange, onDateRangeChange, filters, isVisible
     if (!localStartDate || !localEndDate) {
       setError("Please select both start and end dates.");
       return;
-    }    
+    }
     if (new Date(localStartDate).getTime() === new Date(localEndDate).getTime()) {
       setError("Start date and end date cannot be the same.");
       return;
     }
-    
+
     const startDateFormatted = localStartDate && isValid(localStartDate)
       ? format(localStartDate, "yyyy-MM-dd")
       : "";
     const endDateFormatted = localEndDate && isValid(localEndDate)
       ? format(localEndDate, "yyyy-MM-dd")
       : "";
-setError("")
+    setError("")
     onDateRangeChange("startDate", startDateFormatted);
     onDateRangeChange("endDate", endDateFormatted);
   };
 
   const handleClearFilter = () => {
-    
+
     setLocalStartDate(null);
     setLocalEndDate(null);
     setStatus("");
@@ -293,8 +293,8 @@ setError("")
             </div>
           </div>
           <p className="text-gray-500 text-sm mt-2">
-  Note: To get data for a day, set the start date to that day and the end date to the next day.
-</p>
+            Note: To get data for a day, set the start date to that day and the end date to the next day.
+          </p>
           {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
 
         </div>
@@ -362,10 +362,10 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
 };
 
 const EnquiriesView = () => {
-  const [enquiries, setEnquiries] = useState([]);
+  const [enquiries, setEnquiries] = useState(dummyEnquiries);
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [enquiryCount,setEnquiryCount]= useState()
+  const [enquiryCount, setEnquiryCount] = useState(dummyEnquiries.length);
   const [filters, setFilters] = useState({
     status: '',
     startDate: '',
@@ -382,38 +382,51 @@ const EnquiriesView = () => {
   const fetchEnquiries = async () => {
     setLoading(true);
     try {
-      const queryParams = new URLSearchParams();
+      // Filter dummy data based on filters
+      let filteredEnquiries = [...dummyEnquiries];
 
+      // Apply status filter
       if (filters.status) {
-        queryParams.append('status', filters.status);
+        filteredEnquiries = filteredEnquiries.filter(
+          enquiry => enquiry.status === filters.status
+        );
       }
 
-      if (filters.startDate) {
-        queryParams.append('startDate', filters.startDate);
+      // Apply date range filter
+      if (filters.startDate && filters.endDate) {
+        filteredEnquiries = filteredEnquiries.filter(enquiry => {
+          const enquiryDate = new Date(enquiry.createdAt).toISOString().split('T')[0];
+          return enquiryDate >= filters.startDate && enquiryDate <= filters.endDate;
+        });
       }
 
-      if (filters.endDate) {
-        queryParams.append('endDate', filters.endDate);
-      }
+      // Pagination
+      const startIndex = (filters.page - 1) * filters.limit;
+      const paginatedEnquiries = filteredEnquiries.slice(
+        startIndex,
+        startIndex + filters.limit
+      );
 
-      queryParams.append('page', filters.page.toString());
-      queryParams.append('limit', filters.limit.toString());
+      // Format phone numbers
+      const formattedEnquiries = paginatedEnquiries.map((enquiry) => ({
+        ...enquiry,
+        phoneNumber: enquiry.phoneNumber.length > 2
+          ? enquiry.phoneNumber.slice(0, 2) + " " + enquiry.phoneNumber.slice(2)
+          : enquiry.phoneNumber,
+      }));
 
-      const response = await axiosInstance.get(`/enquiries/get-all-enquiries?${queryParams}`);
-      
-const formattedEnquiries = response.data.enquiries.map((enquiry) => ({
-  ...enquiry,
-  phoneNumber: enquiry.phoneNumber.length > 2 
-    ? enquiry.phoneNumber.slice(0, 2) + " " + enquiry.phoneNumber.slice(2) 
-    : enquiry.phoneNumber,
-}));
+      setEnquiries(formattedEnquiries);
 
-setEnquiries(formattedEnquiries);   
-      setPagination(response.data.pagination);
-      setEnquiryCount(response.data.totalEnquiryCount)
+      // Update pagination info
+      setPagination({
+        total: filteredEnquiries.length,
+        pages: Math.ceil(filteredEnquiries.length / filters.limit),
+        currentPage: filters.page
+      });
+
+      setEnquiryCount(filteredEnquiries.length);
     } catch (error) {
-      console.error("Failed to fetch enquiries", error);
-      toast.error("Failed to load enquiries");
+      console.error("Failed to filter enquiries", error);
     } finally {
       setLoading(false);
     }
@@ -430,9 +443,11 @@ setEnquiries(formattedEnquiries);
       )
     );
   };
-
   const handleDeleteEnquiry = (id) => {
     setEnquiries((prev) => prev.filter((enquiry) => enquiry.id !== id));
+
+    // Update the enquiry count
+    setEnquiryCount(prev => prev - 1);
 
     // If this was the last item on the page, go back a page
     if (enquiries.length === 1 && pagination.currentPage > 1) {

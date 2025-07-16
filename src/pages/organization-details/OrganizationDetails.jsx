@@ -295,8 +295,8 @@ const organizationSchema = yup.object().shape({
 
 const OrganizationDetails = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [logoFile, setLogoFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("src/images/demologo.png");
+  const [logoFile, setLogoFile] = useState("src/images/demologo.png");
   const inputRef = useRef(null);
 
   const {
@@ -328,7 +328,7 @@ const OrganizationDetails = () => {
         }
       } catch (error) {
         console.error('Error fetching organization details:', error);
-        toast.error('Failed to load organization details');
+        // toast.error('Failed to load organization details');
       } finally {
         setIsLoading(false);
       }
@@ -444,6 +444,7 @@ const OrganizationDetails = () => {
     register, 
     control,
     errors, 
+    value,
     type = 'text', 
     placeholder,
     mandatory = false
@@ -497,7 +498,7 @@ const OrganizationDetails = () => {
                   country={'in'}
                   enableSearch={false}
                   disableSearchIcon={true}
-                  value={field.value}
+                  value={value}
                   onChange={(phone) => field.onChange(phone)}
                   inputProps={{
                     name: field.name,
@@ -536,6 +537,7 @@ const OrganizationDetails = () => {
           <>
             <input
               type={type}
+              value={value}
               placeholder={placeholder}
               className={`input input-bordered ${errors[name] ? 'input-error' : ''} h-[50px] px-4 text-base`}
               {...register(name)}
@@ -601,7 +603,8 @@ const OrganizationDetails = () => {
 
             <FormField 
               label="Email" 
-              name="email" 
+              name="email"
+              value="test@gmail.com" 
               register={register} 
               errors={errors} 
               placeholder="Ex: your@email.com"
@@ -611,6 +614,7 @@ const OrganizationDetails = () => {
             <FormField 
               label="Phone" 
               name="phone" 
+              value="0000000000"
               register={register} 
               control={control}
               errors={errors} 
@@ -620,7 +624,8 @@ const OrganizationDetails = () => {
 
             <FormField 
               label="Location" 
-              name="location" 
+              name="location"
+              value="location" 
               register={register} 
               errors={errors} 
               placeholder="Ex: New York, USA"
@@ -630,6 +635,7 @@ const OrganizationDetails = () => {
             <FormField 
               label="Map URL" 
               name="mapUrl" 
+              value="mapurl"
               register={register} 
               errors={errors} 
               placeholder="Ex: https://maps.google.com/..."
