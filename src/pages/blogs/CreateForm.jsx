@@ -1,24 +1,35 @@
 import React, { useState, useRef, useEffect } from "react";
-import { toast } from "react-toastify";
-import axiosInstance from "../../config/axios";
-import playNotificationSound from "../../utils/playNotification";
-import CustomQuillEditor from "./CustomReactQuill";
+import { formatDateForDisplay } from "../../components/data/dummyBlogs";
+
+
+const ContentEditor = ({ value, onChange, hasError, wordCount, MAX_WORD_COUNT, MIN_WORD_COUNT }) => (
+  <div className="form-control mb-4">
+    <label className="label">
+      <span className="label-text">Content <span className="text-error"> *</span></span>
+      <span className="label-text-alt">
+        {wordCount}/{MAX_WORD_COUNT} words
+      </span>
+    </label>
+    <textarea
+      className={`textarea textarea-bordered h-32 ${hasError ? 'textarea-error' : ''}`}
+      placeholder="Write your post content..."
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
+    <div className="text-sm text-gray-500 mt-1">
+      Minimum {MIN_WORD_COUNT} words required
+    </div>
+  </div>
+);
 
 function BlogPostForm({ onBlogCreated, initialData, mode, setIsDrawerOpen }) {
-
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [date, setDate] = useState("");
-
-  const [formattedDate, setFormattedDate] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [content, setContent] = useState("");
   const [wordCount, setWordCount] = useState(0);
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [imageWasRemoved, setImageWasRemoved] = useState(false);
-
 
   const [day, setDay] = useState("");
   const [month, setMonth] = useState("");
@@ -27,17 +38,17 @@ function BlogPostForm({ onBlogCreated, initialData, mode, setIsDrawerOpen }) {
   const MAX_WORD_COUNT = 5000;
   const MIN_WORD_COUNT = 10;
 
+  // Default image for all blog posts
+  const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=400&fit=crop";
 
   const [errors, setErrors] = useState({
     title: "",
     author: "",
     date: "",
     excerpt: "",
-    content: "",
-    image: ""
+    content: ""
   });
 
-  const inputRef = useRef(null);
   const isResetting = useRef(false);
 
   // Month options for grammatical display
@@ -85,36 +96,15 @@ function BlogPostForm({ onBlogCreated, initialData, mode, setIsDrawerOpen }) {
 
   const years = generateYears();
 
-
-  const formatDateWithMonth = (dateString) => {
-    if (!dateString) return "";
-
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return "";
-
-    const months = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
-    ];
-
-    return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
-  };
-
-
   const formatDateForInput = (dateString) => {
     if (!dateString) return "";
-
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return "";
-
-
     return date.toISOString().split('T')[0];
   };
 
-
   const parseDateToComponents = (dateString) => {
     if (!dateString) return { day: "", month: "", year: "" };
-
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return { day: "", month: "", year: "" };
 
@@ -129,25 +119,18 @@ function BlogPostForm({ onBlogCreated, initialData, mode, setIsDrawerOpen }) {
     };
   };
 
-
   const getWordCountFromHTML = (html) => {
     if (!html) return 0;
-
-
     const plainText = html.replace(/<[^>]*>/g, '').trim();
-
-
     const words = plainText.split(/\s+/).filter(word => word.length > 0);
-
     return words.length;
   };
 
-
+  // Update word count when content changes
   useEffect(() => {
     if (content) {
       const count = getWordCountFromHTML(content);
       setWordCount(count);
-
 
       let contentError = "";
       if (!content.trim()) {
@@ -171,12 +154,11 @@ function BlogPostForm({ onBlogCreated, initialData, mode, setIsDrawerOpen }) {
     }
   }, [content]);
 
-
+  // Update date when components change
   useEffect(() => {
     if (day && month && year) {
       const newDate = `${year}-${month}-${day}`;
       setDate(newDate);
-
 
       const dateError = validateDate(newDate);
       setErrors(prev => ({
@@ -185,7 +167,6 @@ function BlogPostForm({ onBlogCreated, initialData, mode, setIsDrawerOpen }) {
       }));
     }
   }, [day, month, year]);
-
 
   const validateTitle = (value) => {
     if (!value.trim()) {
@@ -242,48 +223,16 @@ function BlogPostForm({ onBlogCreated, initialData, mode, setIsDrawerOpen }) {
     if (!value || !value.trim()) {
       return "Content is required";
     }
-
-
     const count = getWordCountFromHTML(value);
-
     if (count < MIN_WORD_COUNT) {
       return `Content must be at least ${MIN_WORD_COUNT} words (currently ${count}).`;
     }
-
     if (count > MAX_WORD_COUNT) {
       return `Content cannot exceed ${MAX_WORD_COUNT} words (currently ${count}).`;
     }
-
     return "";
   };
 
-  const validateImage = (file) => {
-
-    if (mode === "add" && !file) {
-      return "Image is required";
-    }
-
-
-    if (mode === "edit" && imageWasRemoved && !file) {
-      return "Image is required";
-    }
-
-
-    if (file) {
-      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-      if (!validTypes.includes(file.type)) {
-        return "Invalid image type. Allowed types: JPEG, PNG, GIF, WebP";
-      }
-      const maxSize = 5 * 1024 * 1024; // 5MB
-      if (file.size > maxSize) {
-        return "Image size cannot exceed 5MB";
-      }
-    }
-
-    return "";
-  };
-
-  // Validation handler
   const validateField = (name, value) => {
     switch (name) {
       case 'title':
@@ -296,17 +245,13 @@ function BlogPostForm({ onBlogCreated, initialData, mode, setIsDrawerOpen }) {
         return validateExcerpt(value);
       case 'content':
         return validateContent(value);
-      case 'image':
-        return validateImage(value);
       default:
         return "";
     }
   };
 
-
   const handleDateComponentChange = (e) => {
     const { name, value } = e.target;
-
     if (name === 'day') {
       setDay(value);
     } else if (name === 'month') {
@@ -316,35 +261,22 @@ function BlogPostForm({ onBlogCreated, initialData, mode, setIsDrawerOpen }) {
     }
   };
 
-
   const handleInputChange = (e) => {
-    const { name, value, files } = e.target;
+    const { name, value } = e.target;
     let errorMessage = "";
 
-    if (name === 'image') {
-      const file = files[0];
-      if (file) {
-        setImageFile(file);
-        setImagePreview(URL.createObjectURL(file));
-        setImageWasRemoved(false);
-      }
-      errorMessage = validateField('image', file);
-    } else {
-
-      switch (name) {
-        case 'title':
-          setTitle(value);
-          break;
-        case 'author':
-          setAuthor(value);
-          break;
-        case 'excerpt':
-          setExcerpt(value);
-          break;
-      }
-      errorMessage = validateField(name, value);
+    switch (name) {
+      case 'title':
+        setTitle(value);
+        break;
+      case 'author':
+        setAuthor(value);
+        break;
+      case 'excerpt':
+        setExcerpt(value);
+        break;
     }
-
+    errorMessage = validateField(name, value);
 
     setErrors(prevErrors => ({
       ...prevErrors,
@@ -352,15 +284,70 @@ function BlogPostForm({ onBlogCreated, initialData, mode, setIsDrawerOpen }) {
     }));
   };
 
-
   const handleContentChange = (value) => {
     setContent(value);
+  };
 
+  const validateForm = () => {
+    const titleError = validateTitle(title);
+    const authorError = validateAuthor(author);
+    const dateError = validateDate(date);
+    const excerptError = validateExcerpt(excerpt);
+    const contentError = validateContent(content);
+
+    const newErrors = {
+      title: titleError,
+      author: authorError,
+      date: dateError,
+      excerpt: excerptError,
+      content: contentError
+    };
+
+    setErrors(newErrors);
+    const hasErrors = Object.values(newErrors).some(error => error);
+    return !hasErrors;
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Create blog data object with default image
+      const blogData = {
+        title,
+        author,
+        date,
+        excerpt,
+        content,
+        image: DEFAULT_IMAGE // Use default image for all posts
+      };
+
+      // Call the parent callback with the blog data
+      onBlogCreated(blogData);
+
+      // Reset form if in add mode
+      if (mode === "add") {
+        resetForm();
+      }
+
+    } catch (error) {
+      console.error("Error handling blog post:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const resetForm = () => {
     if (isResetting.current) return;
-
     isResetting.current = true;
 
     setTitle("");
@@ -369,175 +356,32 @@ function BlogPostForm({ onBlogCreated, initialData, mode, setIsDrawerOpen }) {
     setDay("");
     setMonth("");
     setYear("");
-    setFormattedDate("");
     setExcerpt("");
     setContent("");
-    setImageFile(null);
-    setImagePreview(null);
-    setImageWasRemoved(false);
     setWordCount(0);
     setErrors({
       title: "",
       author: "",
       date: "",
       excerpt: "",
-      content: "",
-      image: ""
+      content: ""
     });
-
 
     setTimeout(() => {
       isResetting.current = false;
     }, 100);
-  }
-
-
-  const validateForm = () => {
-    const titleError = validateTitle(title);
-    const authorError = validateAuthor(author);
-    const dateError = validateDate(date);
-    const excerptError = validateExcerpt(excerpt);
-    const contentError = validateContent(content);
-    const imageError = validateImage(imageFile);
-
-    const newErrors = {
-      title: titleError,
-      author: authorError,
-      date: dateError,
-      excerpt: excerptError,
-      content: contentError,
-      image: imageError
-    };
-
-    setErrors(newErrors);
-
-
-    const hasErrors = Object.values(newErrors).some(error => error);
-    return !hasErrors;
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-
-    if (!validateForm()) {
-      toast.error("Please fix all errors before submitting.");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("author", author);
-    formData.append("date", date);
-    formData.append("excerpt", excerpt);
-    formData.append("content", content);
-
-
-    if (mode === "edit" && imageWasRemoved) {
-      formData.append("imageRemoved", "true");
-    }
-
-    if (imageFile) {
-      formData.append("image", imageFile);
-    }
-
-    try {
-      setLoading(true);
-      let response;
-
-      if (mode === "add") {
-        response = await axiosInstance.post("/blog/create-blog", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-        toast.success(response.data.message || "Blog post created successfully!");
-        setTitle("");
-        setAuthor("");
-        setDate("");
-        setDay("");
-        setMonth("");
-        setYear("");
-        setFormattedDate("");
-        setExcerpt("");
-        setContent("");
-        setImageFile(null);
-        setImagePreview(null);
-        setImageWasRemoved(false);
-        setWordCount(0);
-
-        setErrors({
-          title: "",
-          author: "",
-          date: "",
-          excerpt: "",
-          content: "",
-          image: ""
-        });
-
-      } else if (mode === "edit" && initialData) {
-        response = await axiosInstance.put(
-          `/blog/update-blog/${initialData.id}`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-        playNotificationSound();
-        toast.success(response.data.message || "Blog post updated successfully!");
-      }
-
-      if (onBlogCreated) {
-        onBlogCreated();
-      }
-
-
-      setIsDrawerOpen(false);
-
-    } catch (error) {
-      console.error("Error handling blog post:", error);
-      toast.error("Failed to save blog post. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
-  const handleRemoveImage = (e) => {
-
-    e.stopPropagation();
-
-    setImageFile(null);
-    setImagePreview(null);
-    setImageWasRemoved(true);
-
-
-    const imageError = validateImage(null);
-    setErrors(prevErrors => ({
-      ...prevErrors,
-      image: imageError
-    }));
-
-    if (inputRef.current) {
-      inputRef.current.value = "";
-    }
-  };
-
-
+  // Initialize form data when component mounts or mode changes
   useEffect(() => {
-
     if (isResetting.current) return;
 
     if (mode === "edit" && initialData) {
       setTitle(initialData.title || "");
       setAuthor(initialData.author || "");
 
-      // Format the date for the input field (YYYY-MM-DD)
       const formattedInputDate = formatDateForInput(initialData.date);
       setDate(formattedInputDate);
-
 
       const { day, month, year } = parseDateToComponents(initialData.date);
       setDay(day);
@@ -546,54 +390,26 @@ function BlogPostForm({ onBlogCreated, initialData, mode, setIsDrawerOpen }) {
 
       setExcerpt(initialData.excerpt || "");
       setContent(initialData.content || "");
-      setImagePreview(initialData.image || null);
-      setImageWasRemoved(false);
-
 
       if (initialData.content) {
         const count = getWordCountFromHTML(initialData.content);
         setWordCount(count);
       }
-
     } else if (mode === "add") {
-
-      setTitle("");
-      setAuthor("");
-      setDate("");
-      setDay("");
-      setMonth("");
-      setYear("");
-      setFormattedDate("");
-      setExcerpt("");
-      setContent("");
-      setImageFile(null);
-      setImagePreview(null);
-      setImageWasRemoved(false);
-      setWordCount(0);
-
-      setErrors({
-        title: "",
-        author: "",
-        date: "",
-        excerpt: "",
-        content: "",
-        image: ""
-      });
+      resetForm();
     }
   }, [mode, initialData]);
 
   const onCancel = () => {
-
     setIsDrawerOpen(false);
     setErrors({
       title: "",
       author: "",
       date: "",
       excerpt: "",
-      content: "",
-      image: ""
+      content: ""
     });
-  }
+  };
 
   return (
     <form onSubmit={handleSubmit}>
@@ -629,6 +445,7 @@ function BlogPostForm({ onBlogCreated, initialData, mode, setIsDrawerOpen }) {
         {errors.author && <p className="text-error text-sm mt-1">{errors.author}</p>}
       </div>
 
+      {/* Date Selection */}
       <div className="form-control mb-4">
         <label className="label">
           <span className="label-text">Date <span className="text-error"> *</span></span>
@@ -648,7 +465,6 @@ function BlogPostForm({ onBlogCreated, initialData, mode, setIsDrawerOpen }) {
             ))}
           </select>
 
-
           <select
             name="month"
             className={`select select-bordered ${errors.date ? 'select-error' : 'border-accent'}`}
@@ -662,7 +478,6 @@ function BlogPostForm({ onBlogCreated, initialData, mode, setIsDrawerOpen }) {
               </option>
             ))}
           </select>
-
 
           <select
             name="year"
@@ -686,99 +501,60 @@ function BlogPostForm({ onBlogCreated, initialData, mode, setIsDrawerOpen }) {
         <label className="label">
           <span className="label-text flex items-center gap-1 group relative">
             Excerpt <span className="text-error">*</span>
-
             <span className="w-4 h-4 bg-gray-500 text-white text-xs rounded-full flex items-center justify-center cursor-pointer">
               ℹ️
             </span>
-
-            {/* Tooltip */}
             <span className="absolute top-full left-1/2 -translate-x-1/2 sm:left-full sm:top-1/2 sm:-translate-y-1/2 sm:translate-x-0 mt-2 sm:mt-0 p-2 bg-gray-700 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 w-[90vw] sm:w-max max-w-xs sm:max-w-sm md:max-w-sm lg:max-w-sm whitespace-normal break-words z-50">
               A short summary or snippet that gives a quick overview of the full content.
             </span>
           </span>
         </label>
-
         <textarea
           name="excerpt"
           className={`textarea textarea-bordered ${errors.excerpt ? 'textarea-error' : ''}`}
           placeholder="Short summary of the blog post..."
           value={excerpt}
           onChange={handleInputChange}
-        ></textarea>
+        />
         {errors.excerpt && <p className="text-error text-sm mt-1">{errors.excerpt}</p>}
       </div>
 
-      {/* Image Upload */}
+      {/* Image Preview Section */}
       <div className="form-control mb-4">
         <label className="label">
-          <span className="label-text">Normal Image <span className="text-error"> *</span>
-            <span> ( JPG/PNG,-1024×768 px, less than 2 MB, no high-res files.)</span>
-          </span>
-
+          <span className="label-text">Image Preview</span>
         </label>
-        <div
-          className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center text-center cursor-pointer ${errors.image ? 'border-error' : 'border-neutral'}`}
-          onClick={() => inputRef.current?.click()}
-        >
-          {!imagePreview ? (
-            <>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-10 w-10 text-primary mb-2"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path d="M4 3a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm0 2h12v3.586l-1.293-1.293a1 1 0 00-1.414 0L10 12l-2.293-2.293a1 1 0 00-1.414 0L4 12V5zm0 10v-1.586l2.293-2.293a1 1 0 011.414 0L10 13l3.293-3.293a1 1 0 011.414 0L16 12.414V15H4z" />
-              </svg>
-              <p className="text-neutral-content">Drag and drop or click to upload</p>
-            </>
-          ) : (
-            <div className="relative">
-              <img
-                src={imagePreview}
-                alt="Preview"
-                className="w-full h-auto rounded-lg shadow-lg"
-              />
-              <button
-                type="button"
-                className="absolute top-2 right-2 btn btn-xs btn-error"
-                onClick={handleRemoveImage}
-              >
-                Remove
-              </button>
-            </div>
-          )}
-          <input
-            type="file"
-            name="image"
-            accept="image/*"
-            className="hidden"
-            ref={inputRef}
-            onChange={handleInputChange}
+        <div className="border-2 border-dashed border-neutral rounded-lg p-4 flex flex-col items-center justify-center text-center">
+          <img
+            src={DEFAULT_IMAGE}
+            alt="Default blog image"
+            className="w-full h-auto rounded-lg shadow-lg max-h-48 object-cover"
           />
+          <p className="text-sm text-gray-500 mt-2">
+            All blog posts will use this default image
+          </p>
         </div>
-        {errors.image && <p className="text-error text-sm mt-1">{errors.image}</p>}
       </div>
-      <CustomQuillEditor
+
+      {/* Content Editor */}
+      <ContentEditor
         value={content}
         onChange={handleContentChange}
-        placeholder="Write your post content..."
         hasError={Boolean(errors.content)}
         wordCount={wordCount}
-        maxWordCount={MAX_WORD_COUNT}
-        minWordCount={MIN_WORD_COUNT}
+        MAX_WORD_COUNT={MAX_WORD_COUNT}
+        MIN_WORD_COUNT={MIN_WORD_COUNT}
       />
-
       {errors.content && <p className="text-error text-sm mt-1">{errors.content}</p>}
 
-
+      {/* Submit Buttons */}
       <div className="form-control mt-6 flex flex-col gap-2">
         <button
           type="submit"
           className="btn btn-primary"
           disabled={loading || wordCount < MIN_WORD_COUNT || wordCount > MAX_WORD_COUNT}
         >
-          {loading && <span className="spinner-border spinner-border-sm me-2"></span>}
+          {loading && <span className="loading loading-spinner loading-sm mr-2"></span>}
           {loading ? (mode === "add" ? "Creating..." : "Updating...") : mode === "add" ? "Create" : "Update"}
         </button>
         <button type="button" className="btn" onClick={onCancel}>
