@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import axiosInstance from "../../config/axios";
 import SubscriberTable from "../../components/newsletter/SubscriberTable";
 import { toast } from "react-toastify";
 import * as Yup from "yup";
-import playNotificationSound from "../../utils/playNotification";
+// import playNotificationSound from "../../utils/playNotification";
+import { getPaginatedSubscribers, sendNewsletterSimulation } from "../../components/data/dummyNewsletters";
 
 const Newsletter = () => {
     const [subscribers, setSubscribers] = useState([]);
@@ -38,22 +38,20 @@ const Newsletter = () => {
     const fetchSubscribers = async () => {
         setLoading(true);
         try {
-            const queryParams = new URLSearchParams({
-                page: filters.page.toString(),
-                limit: filters.limit.toString(),
-            });
-
-            const response = await axiosInstance.get(
-                `/newsletter/get-all-subscribers?${queryParams}`
-            );
-            setSubscribers(response.data.subscribers);
+            // Simulate API call delay
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            const response = getPaginatedSubscribers(filters.page, filters.limit);
+            
+            setSubscribers(response.subscribers);
             setPagination({
-                total: response.data.pagination.total,
-                pages: response.data.pagination.totalPages,
-                currentPage: response.data.pagination.page,
+                total: response.pagination.total,
+                pages: response.pagination.totalPages,
+                currentPage: response.pagination.page,
             });
         } catch (error) {
             console.error("Failed to fetch newsletter subscribers", error);
+            toast.error("Failed to fetch subscribers");
         } finally {
             setLoading(false);
         }
@@ -98,10 +96,15 @@ const Newsletter = () => {
 
         try {
             setIsModalOpen(false);
-            const response = await axiosInstance.post("/newsletter/send-newsletter", {
-                subject: emailSubject,
-                content: emailMessage,
-            });
+            
+            // Show loading toast
+            const loadingToast = toast.loading("Sending newsletter...");
+            
+            const response = await sendNewsletterSimulation(emailSubject, emailMessage);
+            
+            // Dismiss loading toast
+            toast.dismiss(loadingToast);
+            
             // playNotificationSound()
             toast.success("Bulk mail sent successfully");
         } catch (error) {

@@ -121,7 +121,7 @@ function Sidebar({ isOpen, onClose, isCollapsed, setIsCollapsed }) {
                 { name: 'Blogs', path: '/blog', icon: PenTool, count: count.blogs },
                 { name: 'Compliance', path: '/documents', icon: FileText },
                 { name: 'SEO Editor', path: '/seo-editor', icon: Layers },
-                { name: 'Video Management', path: '/youtube-videos', icon: YoutubeIcon, count: count.youTubeVideo },
+                // { name: 'Video Management', path: '/youtube-videos', icon: YoutubeIcon, count: count.youTubeVideo },
                 { name: 'Team Management', path: '/team', icon: Users, count: count.team },
                 { name: 'FAQs', path: '/faqs', icon: FileQuestion, count: count.faqs },
                 { name: 'Services', path: '/services', icon: BriefcaseBusiness, count: count.services },
