@@ -2,35 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import axiosInstance from '../../config/axios';
-import playNotificationSound from '../../utils/playNotification';
 
 function CareerForm({ onCareerCreated, initialData, mode, setIsDrawerOpen, careers }) {
-  // Initialize state with default empty values or initialData if available
   const [career, setCareer] = useState({
-    position: initialData?.position || '',
-    positionCount: initialData?.positionCount?.toString() || '',
-    location: initialData?.location || '',
-    shortdescription: initialData?.shortdescription || '',
-    jobType: initialData?.jobType || ''
+    position: '',
+    positionCount: '',
+    location: '',
+    shortdescription: '',
+    jobType: ''
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [charCount, setCharCount] = useState(0);
 
-  // Set initial character count on component mount
-  useEffect(() => {
-    if (career.shortdescription) {
-      const tempDiv = document.createElement("div");
-      tempDiv.innerHTML = career.shortdescription;
-      setCharCount(tempDiv.textContent.length);
-    }
-  }, []);
-
-  // This useEffect will run only when mode or initialData reference changes
   useEffect(() => {
     if (mode === "edit" && initialData) {
-      // Update form data without setTimeout
       setCareer({
         position: initialData.position || '',
         positionCount: initialData.positionCount?.toString() || '',
@@ -39,14 +25,12 @@ function CareerForm({ onCareerCreated, initialData, mode, setIsDrawerOpen, caree
         jobType: initialData.jobType || ''
       });
       
-      // Update character count for rich text
       if (initialData.shortdescription) {
         const tempDiv = document.createElement("div");
         tempDiv.innerHTML = initialData.shortdescription;
         setCharCount(tempDiv.textContent.length);
       }
-    } else if (mode === "add") {
-      // Reset form for add mode
+    } else {
       setCareer({
         position: '',
         positionCount: '',
@@ -55,10 +39,7 @@ function CareerForm({ onCareerCreated, initialData, mode, setIsDrawerOpen, caree
         jobType: ''
       });
       setCharCount(0);
-      setErrors({});
     }
-    
-    setIsSubmitting(false);
   }, [mode, initialData]);
 
   const validateField = (name, value) => {
@@ -79,36 +60,24 @@ function CareerForm({ onCareerCreated, initialData, mode, setIsDrawerOpen, caree
           : null;
 
       case 'shortdescription':
-        // Check if value is truly empty first
-        if (!value) {
-          return "Short description is required";
-        }
+        if (!value) return "Short description is required";
         
-        // Check for empty editor content patterns
         const emptyPatterns = ['<p><br></p>', '<p></p>', ''];
         if (emptyPatterns.includes(value)) {
           return "Short description is required";
         }
         
-        // For rich text, we check the stripped text length
         const tempDiv = document.createElement("div");
         tempDiv.innerHTML = value;
         const textLength = tempDiv.textContent.trim().length;
         
-        if (textLength < 10) {
-          return "Short description must be at least 10 characters long";
-        }
-        
-        if (textLength > 5000) {
-          return "Short description exceeds maximum length of 5000 characters";
-        }
+        if (textLength < 10) return "Short description must be at least 10 characters long";
+        if (textLength > 5000) return "Short description exceeds maximum length of 5000 characters";
         
         return null;
 
       case 'jobType':
-        return value === ''
-          ? "Job type is required"
-          : null;
+        return value === '' ? "Job type is required" : null;
 
       default:
         return null;
@@ -119,13 +88,9 @@ function CareerForm({ onCareerCreated, initialData, mode, setIsDrawerOpen, caree
     event.preventDefault();
     const newErrors = {};
     
-    // Special validation for short description to handle ReactQuill content
     const shortDescError = validateField('shortdescription', career.shortdescription);
-    if (shortDescError) {
-      newErrors.shortdescription = shortDescError;
-    }
+    if (shortDescError) newErrors.shortdescription = shortDescError;
     
-    // Validate other fields
     ['position', 'positionCount', 'location', 'jobType'].forEach((field) => {
       const error = validateField(field, career[field]);
       if (error) newErrors[field] = error;
@@ -140,23 +105,18 @@ function CareerForm({ onCareerCreated, initialData, mode, setIsDrawerOpen, caree
 
     try {
       setIsSubmitting(true);
-      let response;
-      if (mode === "add") {
-        response = await axiosInstance.post("/career/create-career", career);
-        playNotificationSound();
-        toast.success("Career created successfully!");
-      } else if (mode === "edit" && initialData) {
-        response = await axiosInstance.put(`/career/update-career/${initialData.id}`, career);
-        playNotificationSound();
-        toast.success("Career updated successfully!");
-      }
+      
+      const careerData = {
+        ...career,
+        positionCount: parseInt(career.positionCount),
+        id: mode === "edit" ? initialData.id : Math.max(0, ...careers.map(c => c.id)) + 1
+      };
 
-      if (onCareerCreated) onCareerCreated();
-      setIsDrawerOpen(false);
+      onCareerCreated(careerData);
+      
     } catch (error) {
       console.error("Error submitting career form:", error);
-      const errorMessage = error.response?.data?.message || "Failed to save career. Please try again.";
-      toast.error(errorMessage);
+      toast.error("Failed to save career. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -184,21 +144,15 @@ function CareerForm({ onCareerCreated, initialData, mode, setIsDrawerOpen, caree
   ];
 
   const handleQuillChange = (content) => {
-    // Update the shortdescription in career state
     setCareer({ ...career, shortdescription: content });
     
-    // Calculate plain text character count
     const tempDiv = document.createElement("div");
     tempDiv.innerHTML = content;
     const textLength = tempDiv.textContent.length;
     setCharCount(textLength);
     
-    // Clear the error for this field when the user is typing
     if (errors.shortdescription) {
-      setErrors(prev => ({ 
-        ...prev, 
-        shortdescription: null
-      }));
+      setErrors(prev => ({ ...prev, shortdescription: null }));
     }
   };
 
