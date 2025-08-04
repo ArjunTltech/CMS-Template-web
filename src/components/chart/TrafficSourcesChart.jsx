@@ -3,6 +3,7 @@ import { Chart } from "react-google-charts";
 import axiosInstance from "../../config/axios";
 import { useTheme } from "../../context/ThemeContext";
 import { BarChart2, Users } from "lucide-react";
+import { dummyTrafficSources } from "../data/dummyAnalytics";
 
 const TrafficSourcesChart = () => {
     const [data, setData] = useState(null);
@@ -40,18 +41,14 @@ const TrafficSourcesChart = () => {
                 end = fetchedEndDate;
             }
 
-            const response = await axiosInstance.get("/stats/traffic-sources", {
-                params: { startDate: start, endDate: end }
-            });
-
             const chartData = [
-                ["Channel", "Sessions", "Users"],
-                ...response.data.data.map((source) => [
-                    `${source.channel} (${source.percentage}%)`,
-                    Number(source.sessions),
-                    Number(source.users),
-                ])
-            ];
+            ["Channel", "Sessions", "Users"],
+            ...dummyTrafficSources.map((source) => [
+                `${source.channel} (${source.percentage}%)`,
+                Number(source.sessions),
+                Number(source.users),
+            ]),
+        ];
 
             setData(chartData);
             setError(null);

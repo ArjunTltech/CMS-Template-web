@@ -3,6 +3,7 @@ import StatCard from '../ui/StatCard';
 import { FileText } from 'lucide-react';
 import axiosInstance from '../../config/axios';
 import { SkeletonCard } from '../skeleton/Skeleton';
+import { dummyTotalServices } from '../data/dummyStats';
 
 const TotalServiceStats = () => {
     const [data, setData] = useState(null);
@@ -11,8 +12,8 @@ const TotalServiceStats = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axiosInstance.get("/stats/total-services");
-                const result = response.data.data;
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                const result = dummyTotalServices.totalServices;
                 setData(result);
             } catch (error) {
                 console.error("Error fetching data:", error);

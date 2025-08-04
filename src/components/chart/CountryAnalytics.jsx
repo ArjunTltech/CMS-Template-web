@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Chart } from "react-google-charts";
 import { useTheme } from "../../context/ThemeContext";
 import axiosInstance from "../../config/axios";
+import { dummyCountryAnalyticsData } from "../data/dummyAnalytics";
 
 export default function CountryAnalytics() {
   const [data, setData] = useState([["Country", "Total users"]]);
@@ -22,14 +23,9 @@ export default function CountryAnalytics() {
   const fetchData = async (range = dateRange) => {
     setLoading(true);
     try {
-      const response = await axiosInstance.get("/stats/country-analytics", {
-        params: {
-          startDate: range.startDate,
-          endDate: range.endDate
-        }
-      });
-      
-      const result = response.data.data;
+  await new Promise((resolve) => setTimeout(resolve, 300));
+
+      const result = dummyCountryAnalyticsData;
       const chartData = [["Country", "Total users"]];
       
       result.forEach((item) => {

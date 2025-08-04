@@ -3,6 +3,7 @@ import axiosInstance from '../../config/axios';
 import { SkeletonCard } from '../skeleton/Skeleton';
 import StatCard from '../ui/StatCard';
 import { Eye, User } from 'lucide-react';
+import { dummyTotalActiveUsers } from '../data/dummyStats';
 
 const TotalActiveUsers = () => {
     const [data, setData] = useState();
@@ -11,9 +12,8 @@ const TotalActiveUsers = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axiosInstance.get("/stats/active-users");
-                
-                const result = response.data.data.length > 0 ? response.data.data[0].activeUsers : null;
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                const result = dummyTotalActiveUsers.totalActiveUsers;
                 setData(result);
             } catch (error) {
                 console.error("Error fetching data:", error);
@@ -21,7 +21,7 @@ const TotalActiveUsers = () => {
                 setLoading(false);
             }
         };
-    
+
         fetchData();
     }, []);
 
