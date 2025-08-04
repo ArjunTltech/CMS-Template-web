@@ -1,0 +1,160 @@
+/* quillCustomStyles.css - Custom CSS for ReactQuill Nested Lists */
+
+/* Reset counter for each level and ensure proper nesting */
+.ql-editor {
+  counter-reset: list-1 list-2 list-3 list-4;
+}
+
+/* Level 1 - Main ordered list */
+.ql-editor ol {
+  counter-reset: list-2;
+}
+
+.ql-editor ol > li {
+  counter-increment: list-1;
+  list-style: none;
+  position: relative;
+}
+
+.ql-editor ol > li::before {
+  content: counter(list-1) ". ";
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+/* Level 2 - Nested unordered list */
+.ql-editor ol > li ul {
+  counter-reset: list-3;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.ql-editor ol > li ul > li {
+  list-style: none;
+  position: relative;
+  margin-left: 20px;
+}
+
+.ql-editor ol > li ul > li::before {
+  content: "• ";
+  font-weight: bold;
+  margin-right: 8px;
+  color: #666;
+}
+
+/* Level 3 - Nested ordered list inside unordered */
+.ql-editor ol > li ul > li ol {
+  counter-reset: list-4;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.ql-editor ol > li ul > li ol > li {
+  counter-increment: list-3;
+  list-style: none;
+  position: relative;
+  margin-left: 20px;
+}
+
+.ql-editor ol > li ul > li ol > li::before {
+  content: counter(list-3, lower-roman) ". ";
+  font-weight: normal;
+  margin-right: 8px;
+  color: #333;
+}
+
+/* Level 4 - Nested unordered list (deepest level) */
+.ql-editor ol > li ul > li ol > li ul {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.ql-editor ol > li ul > li ol > li ul > li {
+  list-style: none;
+  position: relative;
+  margin-left: 20px;
+}
+
+.ql-editor ol > li ul > li ol > li ul > li::before {
+  content: "◦ ";
+  font-weight: normal;
+  margin-right: 8px;
+  color: #888;
+}
+
+/* Handle direct nested ordered lists (ol > ol) */
+.ql-editor ol ol {
+  counter-reset: list-2;
+}
+
+.ql-editor ol ol > li {
+  counter-increment: list-2;
+  list-style: none;
+  position: relative;
+  margin-left: 20px;
+}
+
+.ql-editor ol ol > li::before {
+  content: counter(list-1) "." counter(list-2) " ";
+  font-weight: normal;
+  margin-right: 8px;
+}
+
+/* Handle direct nested unordered lists (ul > ul) */
+.ql-editor ul ul > li::before {
+  content: "◦ ";
+  color: #888;
+}
+
+/* Ensure proper spacing and indentation */
+.ql-editor li {
+  margin-bottom: 4px;
+  line-height: 1.6;
+}
+
+.ql-editor ol, .ql-editor ul {
+  padding-left: 0;
+}
+
+.ql-editor ol ol, .ql-editor ul ul, .ql-editor ol ul, .ql-editor ul ol {
+  margin-left: 20px;
+  padding-left: 0;
+}
+
+/* Alternative numbering styles for different levels */
+.ql-editor .level-1 {
+  counter-reset: item;
+}
+
+.ql-editor .level-1 > li {
+  counter-increment: item;
+}
+
+.ql-editor .level-1 > li::before {
+  content: counter(item, decimal) ". ";
+}
+
+.ql-editor .level-2 > li::before {
+  content: counter(item, lower-alpha) ". ";
+}
+
+.ql-editor .level-3 > li::before {
+  content: counter(item, lower-roman) ". ";
+}
+
+.ql-editor .level-4 > li::before {
+  content: counter(item, decimal) ") ";
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .ql-editor ol ol, .ql-editor ul ul, .ql-editor ol ul, .ql-editor ul ol {
+    margin-left: 15px;
+  }
+  
+  .ql-editor ol > li ul > li,
+  .ql-editor ol > li ul > li ol > li,
+  .ql-editor ol > li ul > li ol > li ul > li {
+    margin-left: 15px;
+  }
+}

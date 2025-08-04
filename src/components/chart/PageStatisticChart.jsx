@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Chart } from "react-google-charts";
 import axiosInstance from "../../config/axios";
 import { useTheme } from "../../context/ThemeContext";
+import { dummyPageStatistics } from "../data/dummyAnalytics";
 
 const PageStatisticsChart = () => {
   const [data, setData] = useState(null);
@@ -11,20 +12,17 @@ const PageStatisticsChart = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // API call using Axios
-        const response = await axiosInstance.get("/stats/full-page-data"); 
-        
         const chartData = [
-          ["Page Path", "Screen Page Views", "Sessions", "Active Users", "Event Count"],
-          ...response.data.data.map((page) => [
-            page.pageTitle, // Display the page title in the chart
-            Number(page.screenPageViews),
-            Number(page.sessions),
-            Number(page.activeUsers),
-            Number(page.eventCount),
-          ]),
-        ];
-        setData(chartData);
+        ["Page Path", "Screen Page Views", "Sessions", "Active Users", "Event Count"],
+        ...dummyPageStatistics.map((page) => [
+          page.pageTitle,
+          Number(page.screenPageViews),
+          Number(page.sessions),
+          Number(page.activeUsers),
+          Number(page.eventCount),
+        ]),
+      ];
+      setData(chartData);
       } catch (error) {
         // Catch any errors from the API call
         setError("Failed to fetch data. Please try again later.");

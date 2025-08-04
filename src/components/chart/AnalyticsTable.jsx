@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../../config/axios';
+import { dummyAnalyticsData } from '../data/dummyAnalytics';
 
 const AnalyticsTable = () => {
     const [period, setPeriod] = useState('30days');
@@ -24,26 +25,10 @@ const AnalyticsTable = () => {
     const fetchData = async (selectedPeriod, customStartDate, customEndDate) => {
         setLoading(true);
         try {
-            let start, end;
-            if (selectedPeriod === 'custom') {
-                // Only fetch if both dates are selected
-                if (!customStartDate || !customEndDate) {
-                    setError('Please select both start and end dates');
-                    setLoading(false);
-                    return;
-                }
-                start = customStartDate;
-                end = customEndDate;
-            } else {
-                const { startDate, endDate } = getDateRange(selectedPeriod.replace('days', ''));
-                start = startDate;
-                end = endDate;
-            }
+            await new Promise((resolve) => setTimeout(resolve, 500));
 
-            const response = await axiosInstance.get('/stats/full-page-data', {
-                params: { startDate: start, endDate: end },
-            });
-            setData(response.data.data);
+            // Use dummy data instead of API call
+            setData(dummyAnalyticsData);
             setError(null);
         } catch (err) {
             setError('Failed to fetch analytics data');
@@ -55,11 +40,9 @@ const AnalyticsTable = () => {
 
     useEffect(() => {
         if (period === 'custom') {
-            // Skip fetching data if it's a custom date and no date is selected yet
             if (!startDate || !endDate) return;
             fetchData(period, startDate, endDate);
         } else {
-            // Automatically fetch data for predefined periods (e.g., Last 7 days, 30 days)
             fetchData(period, startDate, endDate);
         }
     }, [period, startDate, endDate]);
@@ -79,7 +62,7 @@ const AnalyticsTable = () => {
 
     return (
         <div className="card bg-base-200 shadow-xl mt-8 w-full ">
-             <div className="card-body gap-4 min-h-[600px] max-h-[800px] overflow-y-auto scrollbar-none">
+            <div className="card-body gap-4 min-h-[600px] max-h-[800px] overflow-y-auto scrollbar-none">
                 <div className="flex flex-wrap justify-between">
                     <h2 className="card-title text-2xl mb-4">Page Analytics Overview</h2>
                     <select
@@ -115,34 +98,34 @@ const AnalyticsTable = () => {
                     </div>
                 )}
 
-                    <div className="overflow-x-auto">
-                        <table className="table w-full table-zebra ">
-                            <thead>
-                                <tr>
-                                    <th>Page Path</th>
-                                    <th className="text-right">Views</th>
-                                    <th className="text-right">Sessions</th>
-                                    <th className="text-right">Users</th>
-                                    <th className="text-right">Events</th>
-                                    <th className="text-right">Engagement</th>
+                <div className="overflow-x-auto">
+                    <table className="table w-full table-zebra ">
+                        <thead>
+                            <tr>
+                                <th>Page Path</th>
+                                <th className="text-right">Views</th>
+                                <th className="text-right">Sessions</th>
+                                <th className="text-right">Users</th>
+                                <th className="text-right">Events</th>
+                                <th className="text-right">Engagement</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.map((row, index) => (
+                                <tr key={index} className="hover">
+                                    <td className="font-medium">{row.pagePath}</td>
+                                    <td className="text-right">{row.screenPageViews}</td>
+                                    <td className="text-right">{row.sessions}</td>
+                                    <td className="text-right">{row.activeUsers}</td>
+                                    <td className="text-right">{row.eventCount}</td>
+                                    <td className="text-right">
+                                        {(Number(row.engagementRate) * 100).toFixed(1)}%
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {data.map((row, index) => (
-                                    <tr key={index} className="hover">
-                                        <td className="font-medium">{row.pagePath}</td>
-                                        <td className="text-right">{row.screenPageViews}</td>
-                                        <td className="text-right">{row.sessions}</td>
-                                        <td className="text-right">{row.activeUsers}</td>
-                                        <td className="text-right">{row.eventCount}</td>
-                                        <td className="text-right">
-                                            {(Number(row.engagementRate) * 100).toFixed(1)}%
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

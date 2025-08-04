@@ -3,6 +3,7 @@ import axiosInstance from '../../config/axios';
 import { SkeletonCard } from '../skeleton/Skeleton';
 import StatCard from '../ui/StatCard';
 import { Eye, TrendingDown } from 'lucide-react';
+import { dummyTotalBounceRate } from '../data/dummyStats';
 
 const TotalBounceRate = () => {
     const [data, setData] = useState();
@@ -11,9 +12,8 @@ const TotalBounceRate = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axiosInstance.get("/stats/bounce-rate");
-                
-                const result = response.data.data.length > 0 ? response.data.data[0].bounceRate : null;
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                const result = dummyTotalBounceRate.totalBounceRate
                 setData(result);
             } catch (error) {
                 console.error("Error fetching data:", error);
@@ -21,7 +21,7 @@ const TotalBounceRate = () => {
                 setLoading(false);
             }
         };
-    
+
         fetchData();
     }, []);
     const bounceRatePercentage = data ? `${(parseFloat(data) * 100).toFixed(2)}` : "0.00%";
@@ -35,7 +35,7 @@ const TotalBounceRate = () => {
                     title="Total Bounce Rate"
                     value={bounceRatePercentage}
                     description="Percent in Last 30 days"
-                    icon={TrendingDown }
+                    icon={TrendingDown}
                     iconColor="text-red-500"
                 />
             )}

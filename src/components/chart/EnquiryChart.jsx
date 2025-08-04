@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Chart } from "react-google-charts";
 import axiosInstance from "../../config/axios";
 import { useTheme } from "../../context/ThemeContext";
+import { dummyEnquiryData } from "../data/dummyStats";
 
 function EnquiryChart() {
     const [chartData, setChartData] = useState([]);
@@ -12,8 +13,8 @@ function EnquiryChart() {
     useEffect(() => {
         const fetchChartData = async () => {
             try {
-                const response = await axiosInstance.get("/stats/enquiries/last-7-days");
-                let data = response.data;
+               await new Promise((resolve) => setTimeout(resolve, 300));
+                let data = [...dummyEnquiryData];
 
                 if (data[data.length - 1][0] === "Date" && data[data.length - 1][1] === "Enquiries") {
                     data = [data.pop(), ...data];
@@ -21,7 +22,7 @@ function EnquiryChart() {
 
                 // Format dates to MMM DD
                 const formattedData = data.map((row, index) => {
-                    if (index === 0) return row; // Skip header row
+                    if (index === 0) return row; 
                     const date = new Date(row[0]);
                     const formattedDate = date.toLocaleDateString('en-US', {
                         month: 'short',

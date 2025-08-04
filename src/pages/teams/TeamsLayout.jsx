@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import playNotificationSound from '../../utils/playNotification';
+import { dummyTeamMembers } from '../../components/data/dummyTeamMembers';
 
 const TeamManagement = () => {
   const [teamMembers, setTeamMembers] = useState([]);
@@ -51,10 +52,10 @@ const TeamManagement = () => {
 
   const fetchTeamMembers = async () => {
     try {
-      setIsLoading(true);
-      const response = await axiosInstance.get('/team/all-team');
-      const sortedTeam = response.data.team.sort((a, b) => a.order - b.order);      
-      setTeamMembers(sortedTeam); setIsLoading(false);
+    setIsLoading(true);
+  const sortedTeam = [...dummyTeamMembers].sort((a, b) => a.order - b.order);
+  setTeamMembers(sortedTeam);
+  setIsLoading(false);
     } catch (error) {
       console.error('Error fetching team members:', error);
       setIsLoading(false);

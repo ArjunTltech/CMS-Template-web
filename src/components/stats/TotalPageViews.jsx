@@ -3,6 +3,7 @@ import axiosInstance from '../../config/axios';
 import { SkeletonCard } from '../skeleton/Skeleton';
 import StatCard from '../ui/StatCard';
 import { Eye } from 'lucide-react';
+import { dummyTotalOverView } from '../data/dummyStats';
 
 const TotalPageViews = () => {
     const [data, setData] = useState();
@@ -11,8 +12,8 @@ const TotalPageViews = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axiosInstance.get("/stats/total-page-views");
-                const result = response.data.data.length > 0 ? response.data.data[0].screenPageViews : null;
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                const result = dummyTotalOverView.totalPageViews;
                 setData(result);
             } catch (error) {
                 console.error("Error fetching data:", error);
@@ -20,7 +21,7 @@ const TotalPageViews = () => {
                 setLoading(false);
             }
         };
-    
+
         fetchData();
     }, []);
 

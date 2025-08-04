@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Chart } from "react-google-charts";
 import axiosInstance from "../../config/axios"; // Assuming axiosInstance is already set up.
 import { useTheme } from "../../context/ThemeContext"; // Assuming theme context is available.
+import { dummySessionData } from "../data/dummyStats";
 
 function SessionChart() {
     const [chartData, setChartData] = useState([]);
@@ -12,9 +13,8 @@ function SessionChart() {
     useEffect(() => {
         const fetchSessionData = async () => {
             try {
-                const response = await axiosInstance.get("/stats/session-duration"); // Replace with actual endpoint
-                const data = response.data;
-
+                await new Promise((resolve) => setTimeout(resolve, 300));
+                const data = dummySessionData;
                 if (data.success) {
                     const formattedData = [
                         ['Source', 'Avg Session Duration (seconds)'],

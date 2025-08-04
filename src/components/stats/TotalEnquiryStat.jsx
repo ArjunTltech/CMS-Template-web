@@ -3,6 +3,7 @@ import StatCard from '../ui/StatCard';
 import { Clipboard } from 'lucide-react';
 import axiosInstance from '../../config/axios';
 import { SkeletonCard } from '../skeleton/Skeleton';
+import { dummyTotalEnquiry } from '../data/dummyStats';
 
 const TotalEnquiryStat = () => {
     const [data, setData] = useState(null);
@@ -11,8 +12,8 @@ const TotalEnquiryStat = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axiosInstance.get("/stats/total-enquiries");
-                const result = response.data.data;
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                const result = dummyTotalEnquiry.totalEnquiry;
                 setData(result);
             } catch (error) {
                 console.error("Error fetching data:", error);

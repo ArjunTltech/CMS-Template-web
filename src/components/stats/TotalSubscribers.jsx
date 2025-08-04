@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import StatCard from '../ui/StatCard';
 import { Mail } from 'lucide-react';
 import { SkeletonCard } from '../skeleton/Skeleton';
+import { dummyTotalSubscribers } from '../data/dummyStats';
 
 const TotalSubscribers = () => {
     const [data, setData] = useState(null);
@@ -11,8 +12,7 @@ const TotalSubscribers = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axiosInstance.get("/stats/total-subscribers");
-                const result = response.data.data;
+                await new Promise((resolve) => setTimeout(resolve, 500)); const result = dummyTotalSubscribers.totalSubscribers;
                 setData(result);
             } catch (error) {
                 console.error("Error fetching data:", error);
