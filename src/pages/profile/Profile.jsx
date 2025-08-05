@@ -194,7 +194,7 @@ import { toast } from 'react-toastify';
 import axiosInstance from '../../config/axios';
 
 const Profile = () => {
-  const [user, setUser] = useState({ name: '', email: '', role: '' });
+  const [user, setUser] = useState({ name: 'superadmin', email: 'superadmin', role: 'superadmin' });
   const [loading, setLoading] = useState(true);
   const [isEditingName, setIsEditingName] = useState(false);
   const [showPasswords, setShowPasswords] = useState({
@@ -231,7 +231,6 @@ const Profile = () => {
     const fetchUser = async () => {
       try {
         const response = await axiosInstance.get('/users/get-profile');
-        setUser(response.data);
       } catch (error) {
         toast.error('Error fetching user data.');
         console.error('Error fetching user data:', error);
@@ -403,6 +402,8 @@ const Profile = () => {
                   </label>
                   <div className="relative">
                     <input
+                                        value={"superadmin"}
+
                       type={showPasswords.current ? "text" : "password"}
                       {...register('currentPassword')}
                       className="block w-full h-10 rounded-lg pl-2 bg-base-100 border-gray-600  shadow-sm focus:border-purple-500 focus:ring-purple-500 pr-10"
@@ -435,6 +436,8 @@ const Profile = () => {
                   </label>
                   <div className="relative">
                     <input
+                                        value={"superadmin"}
+
                       type={showPasswords.new ? "text" : "password"}
                       {...register('newPassword')}
                       className="block w-full h-10 rounded-lg pl-2 bg-base-100 border-gray-600  shadow-sm focus:border-purple-500 focus:ring-purple-500 pr-10"
@@ -467,6 +470,8 @@ const Profile = () => {
                   </label>
                   <div className="relative">
                     <input
+                                        value={"superadmin"}
+
                       type={showPasswords.confirm ? "text" : "password"}
                       {...register('confirmPassword')}
                       className="block w-full h-10 rounded-lg pl-2 bg-base-100 border-gray-600  shadow-sm focus:border-purple-500 focus:ring-purple-500 pr-10"

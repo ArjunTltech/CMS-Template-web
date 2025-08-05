@@ -1,75 +1,75 @@
 const dummyService = [
   {
-    id: "fd061d29-f0a2-473b-8148-390b8494f408",
-    title: "Tenetur adipisci per",
-    shortDescription: "Enim sit neque optio",
-    tagline: "Eum non rerum est et",
-    image: "src/images/image1.jpg",
-    createdAt: "2025-05-20T05:30:53.718Z",
-    updatedAt: "2025-05-20T05:30:53.718Z",
-    taglineDescription: "Non quis consectetur",
+    id: "b101a987-a2fc-41de-baa2-1b84babc4001",
+    title: "UI/UX Design Services",
+    shortDescription: "Designing interfaces users love",
+    tagline: "User-first design approach",
+    image: "https://images.unsplash.com/photo-1605379399642-870262d3d051?auto=format&fit=crop&w=1170&q=80",
+    createdAt: "2025-07-01T09:00:00.000Z",
+    updatedAt: "2025-07-01T09:00:00.000Z",
+    taglineDescription: "Crafting intuitive and visually appealing designs",
     servicePoints: [
       {
-        id: "325d38fd-e860-45d6-a1dc-5b43650301b4",
-        text: "Soluta eu repudianda",
-        serviceId: "fd061d29-f0a2-473b-8148-390b8494f408"
+        id: "u001",
+        text: "Wireframing and prototyping",
+        serviceId: "b101a987-a2fc-41de-baa2-1b84babc4001"
       }
     ],
-    points: ["Soluta eu repudianda"]
+    points: ["Wireframing and prototyping"]
   },
   {
-    id: "a47cb100-2c24-4b89-b05d-d60b1fabc456",
-    title: "Creative Design Studio",
-    shortDescription: "Innovative solutions for brands",
-    tagline: "Design beyond boundaries",
-    image: "src/images/image1.jpg",
-    createdAt: "2025-06-01T10:15:00.000Z",
-    updatedAt: "2025-06-01T10:15:00.000Z",
-    taglineDescription: "Where creativity meets purpose",
+    id: "b202b998-b3ad-42cf-8ae2-2c75cdbc5002",
+    title: "Cloud Infrastructure Solutions",
+    shortDescription: "Secure and scalable cloud deployment",
+    tagline: "Empower your infrastructure",
+  image: "https://images.unsplash.com/photo-1556761175-4b46a572b786?auto=format&fit=crop&w=1170&q=80",
+      createdAt: "2025-07-05T10:30:00.000Z",
+    updatedAt: "2025-07-05T10:30:00.000Z",
+    taglineDescription: "Cloud-native solutions for modern enterprises",
     servicePoints: [
       {
-        id: "ed135321-1234-4b34-a234-d123fd21d123",
-        text: "Brand identity creation",
-        serviceId: "a47cb100-2c24-4b89-b05d-d60b1fabc456"
+        id: "u002",
+        text: "AWS, Azure, and Google Cloud setup",
+        serviceId: "b202b998-b3ad-42cf-8ae2-2c75cdbc5002"
       }
     ],
-    points: ["Brand identity creation"]
+    points: ["AWS, Azure, and Google Cloud setup"]
   },
   {
-    id: "c1e2b334-e9a2-4d20-932b-123d3a1b52cf",
-    title: "Digital Marketing Pro",
-    shortDescription: "Boost your business online",
-    tagline: "Reach your audience effectively",
-    image: "src/images/image1.jpg",
-    createdAt: "2025-06-10T08:30:25.000Z",
-    updatedAt: "2025-06-10T08:30:25.000Z",
-    taglineDescription: "Targeted campaigns, real results",
+    id: "b303c999-c4be-53df-9bf3-3d86decd6003",
+    title: "E-Commerce Solutions",
+    shortDescription: "Launch your online store with ease",
+    tagline: "Sell smarter, not harder",
+    image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1170&q=80",
+    createdAt: "2025-07-10T14:45:00.000Z",
+    updatedAt: "2025-07-10T14:45:00.000Z",
+    taglineDescription: "Complete solutions from storefront to checkout",
     servicePoints: [
       {
-        id: "77f97baf-1b7b-4c6a-aeee-9ab9785adf44",
-        text: "SEO and SEM strategies",
-        serviceId: "c1e2b334-e9a2-4d20-932b-123d3a1b52cf"
+        id: "u003",
+        text: "Shopify, WooCommerce & Custom Platforms",
+        serviceId: "b303c999-c4be-53df-9bf3-3d86decd6003"
       }
     ],
-    points: ["SEO and SEM strategies"]
+    points: ["Shopify, WooCommerce & Custom Platforms"]
   },
   {
-    id: "db3e9023-75c4-48c3-8a0a-1223c31c45d8",
-    title: "Full Stack Development",
-    shortDescription: "Build robust web applications",
-    tagline: "Frontend to backend excellence",
-    image: "src/images/image1.jpg",
-    createdAt: "2025-06-15T14:45:10.000Z",
-    updatedAt: "2025-06-15T14:45:10.000Z",
-    taglineDescription: "Scalable solutions for your ideas",
+    id: "b404d000-d5cf-64ef-ab04-4e97efde7004",
+    title: "Mobile App Development",
+    shortDescription: "Cross-platform and native apps",
+    tagline: "Build apps that users love",
+    image: "https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=1170&q=80",
+    createdAt: "2025-07-15T16:00:00.000Z",
+    updatedAt: "2025-07-15T16:00:00.000Z",
+    taglineDescription: "Seamless experiences on iOS and Android",
     servicePoints: [
       {
-        id: "ab12cd34-ef56-7890-gh12-3456ijkl7890",
-        text: "React, Node.js & MongoDB",
-        serviceId: "db3e9023-75c4-48c3-8a0a-1223c31c45d8"
+        id: "u004",
+        text: "Flutter, React Native, Swift & Kotlin",
+        serviceId: "b404d000-d5cf-64ef-ab04-4e97efde7004"
       }
     ],
-    points: ["React, Node.js & MongoDB"]
+    points: ["Flutter, React Native, Swift & Kotlin"]
   }
 ];
 
