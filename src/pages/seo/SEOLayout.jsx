@@ -5,6 +5,7 @@ import * as yup from 'yup';
 import { toast } from 'react-toastify';
 import axiosInstance from '../../config/axios';
 import playNotificationSound from '../../utils/playNotification';
+import { dummySeoData } from '../../components/data/dummySeo';
 
 const schema = yup.object().shape({
   title: yup.object().shape({
@@ -28,7 +29,7 @@ const schema = yup.object().shape({
 });
 
 const SeoLayout = () => {
-  const pages = ['home', 'about', 'services', 'case-studies' ,'blogs' ,'careers' ,'faqs', 'testimonials', 'contact', 'privacy-policy', 'terms'];
+  const pages = ['home', 'about', 'services', 'blogs'];
   const [selectedPage, setSelectedPage] = React.useState('home');
   const [isLoading, setIsLoading] = React.useState(false);
 
@@ -57,85 +58,58 @@ const SeoLayout = () => {
   });
 
   useEffect(() => {
-    const fetchSEOData = async () => {
-      setIsLoading(true);
-      try {
-        const response = await axiosInstance.get(`seo/get/${selectedPage}`);
-        const data = response.data;
+    const data = dummySeoData[selectedPage];
 
-        reset({
-          title: {
-            default: data.title || '',
-            template: ''
-          },
-          description: data.description || '',
-          keywords: data.keywords || '',
-          openGraph: {
-            type: data.ogType || 'website',
-            title: data.ogTitle || '',
-            description: data.ogDescription || '',
-            image: data.ogImage || ''
-          },
-          twitter: {
-            card: data.twitterCard || 'summary_large_image',
-            title: data.twitterTitle || '',
-            description: data.twitterDescription || '',
-            image: data.twitterImage || ''
-          }
-        });
-      } catch (error) {
-        reset({
-          title: {
-            default: null,
-            template: null
-          },
-          description: null,
-          keywords: null,
-          openGraph: {
-            type: null,
-            title: null,
-            description: null,
-            image: null
-          },
-          twitter: {
-            card: null,
-            title: null,
-            description: null,
-            image: null
-          }
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSEOData();
+    if (data) {
+      reset({
+        title: {
+          default: data.title || '',
+          template: ''
+        },
+        description: data.description || '',
+        keywords: data.keywords || '',
+        openGraph: {
+          type: data.ogType || 'website',
+          title: data.ogTitle || '',
+          description: data.ogDescription || '',
+          image: data.ogImage || ''
+        },
+        twitter: {
+          card: data.twitterCard || 'summary_large_image',
+          title: data.twitterTitle || '',
+          description: data.twitterDescription || '',
+          image: data.twitterImage || ''
+        }
+      });
+    } else {
+      reset({
+        title: {
+          default: '',
+          template: ''
+        },
+        description: '',
+        keywords: '',
+        openGraph: {
+          type: '',
+          title: '',
+          description: '',
+          image: ''
+        },
+        twitter: {
+          card: '',
+          title: '',
+          description: '',
+          image: ''
+        }
+      });
+    }
   }, [selectedPage, reset]);
 
-  const onSubmit = async (data) => {
-    try {
-      const response = await axiosInstance.post(`seo/upsert/${selectedPage}`, {
-        pageTitle: selectedPage,
-        title: data.title.default,
-        description: data.description,
-        keywords: data.keywords,
-        ogTitle: data.openGraph.title,
-        ogDescription: data.openGraph.description,
-        ogImage: data.openGraph.image,
-        ogType: data.openGraph.type,
-        twitterCard: data.twitter.card,
-        twitterTitle: data.twitter.title,
-        twitterDescription: data.twitter.description,
-        twitterImage: data.twitter.image
-      });
 
-      if (response.status === 200) {
-        playNotificationSound()
-        toast.success('SEO data saved successfully');
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to save SEO data');
-    }
+  const onSubmit = async (data) => {
+    console.log('Form Data Submitted:', data);
+    playNotificationSound();
+    toast.success('Dummy SEO data "saved" successfully');
   };
 
   const handlePageChange = (page) => {

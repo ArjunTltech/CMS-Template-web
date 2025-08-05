@@ -1,11 +1,18 @@
 import React, { useState, useRef, useEffect } from "react";
 import { toast } from "react-toastify";
-import axiosInstance from "../../config/axios";
-import playNotificationSound from "../../utils/playNotification";
+import { DEFAULT_CASE_STUDY_IMAGE,generateId} from "../../components/data/dummyCaseStudies";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 
-function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIsDrawerOpen }) {
+function CaseForm({ 
+  onClientCreated, 
+  refreshClientList, 
+  initialData, 
+  mode, 
+  setIsDrawerOpen,
+  onAddClient,
+  onUpdateClient 
+}) {
   const [title, setTitle] = useState("");
   const [subTitle, setSubTitle] = useState("");
   const [author, setAuthor] = useState("");
@@ -45,7 +52,6 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
         [{ 'color': [] }, { 'background': [] }],
         [{ 'font': [] }],
       ],
-      // Add tooltips for all buttons
       handlers: {},
     },
     clipboard: {
@@ -66,7 +72,6 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
   useEffect(() => {
     formMounted.current = true;
     return () => {
-      // Clear any pending timeouts on unmount
       if (cancelTimeoutRef.current) {
         clearTimeout(cancelTimeoutRef.current);
       }
@@ -74,7 +79,6 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
         clearTimeout(resetTimeoutRef.current);
       }
       
-      // Revoke any object URLs and set mounted flag to false
       cleanupImagePreview();
       formMounted.current = false;
     };
@@ -82,7 +86,7 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
 
   // Helper function to cleanup image preview URL
   const cleanupImagePreview = () => {
-    if (imagePreview && (!initialData || imagePreview !== initialData.image)) {
+    if (imagePreview && (!initialData || imagePreview !== initialData.image) && imagePreview.startsWith('blob:')) {
       URL.revokeObjectURL(imagePreview);
     }
   };
@@ -96,19 +100,14 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
         const toolbar = quillRef.current.getEditor().getModule('toolbar');
         
         if (toolbar && toolbar.container) {
-          // Add tooltips to all toolbar buttons
           const buttons = toolbar.container.querySelectorAll('button, .ql-picker');
           
           buttons.forEach(button => {
-            // Get the class name which indicates the button type
             const className = Array.from(button.classList)
               .find(cls => cls.startsWith('ql-'));
               
             if (className) {
-              // Extract the button type (bold, italic, etc.)
               const buttonType = className.replace('ql-', '');
-              
-              // Set tooltip based on button type
               const tooltipText = getTooltipText(buttonType);
               if (tooltipText) {
                 button.setAttribute('title', tooltipText);
@@ -121,12 +120,11 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
       }
     };
 
-    // Try immediately and also with a slight delay to ensure Quill is fully initialized
     addTooltips();
     const tooltipTimer = setTimeout(addTooltips, 500);
     
     return () => clearTimeout(tooltipTimer);
-  }, [quillRef.current, description]); // Re-run when description changes to ensure toolbar is initialized
+  }, [quillRef.current, description]);
   
   // Function to get tooltip text based on button type
   const getTooltipText = (buttonType) => {
@@ -158,10 +156,7 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
   const getWordCountFromHTML = (html) => {
     if (!html) return 0;
     
-    // Remove HTML tags and get plain text
     const plainText = html.replace(/<[^>]*>/g, '').trim();
-    
-    // Count words by splitting on whitespace and filtering empty strings
     const words = plainText.split(/\s+/).filter(word => word.length > 0);
     
     return words.length;
@@ -175,7 +170,6 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
       const count = getWordCountFromHTML(description);
       setWordCount(count);
       
-      // Update description validation error
       let descriptionError = "";
       if (!description.trim()) {
         descriptionError = "Description is required.";
@@ -248,10 +242,8 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
         return null;
   
       case 'image':
-        if (mode === 'edit' && !value && imagePreview) {
-          return null; // Using existing image in edit mode
-        }
-        return (value || imagePreview) ? null : "Image is required";
+        // Always use default image, so no validation needed
+        return null;
   
       case 'author':
         if (!value) return null; // optional
@@ -266,7 +258,6 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
   
   // Load initial data when component mounts or mode changes
   useEffect(() => {
-    // Clear any pending timeouts when mode changes
     if (cancelTimeoutRef.current) {
       clearTimeout(cancelTimeoutRef.current);
       cancelTimeoutRef.current = null;
@@ -276,11 +267,9 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
       resetTimeoutRef.current = null;
     }
     
-    // Reset cancelling state to prevent issues
     setIsCancelling(false);
     
     if (mode === "edit" && initialData) {
-      // Always reload all data from initialData when in edit mode
       setTitle(initialData.title || "");
       setSubTitle(initialData.subTitle || "");
       setAuthor(initialData.author || "");
@@ -289,21 +278,19 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
       if (initialData.image) {
         setImagePreview(initialData.image);
       } else {
-        setImagePreview(null);
+        setImagePreview(DEFAULT_CASE_STUDY_IMAGE);
       }
       
-      // Make sure to update word count for initial description
       if (initialData.description) {
         const count = getWordCountFromHTML(initialData.description);
         setWordCount(count);
       }
       
-      // Clear any previous errors when loading initial data
       setErrors({});
     } else if (mode === "add") {
       resetForm();
     }
-  }, [mode, initialData, setIsDrawerOpen]); // Added setIsDrawerOpen as dependency
+  }, [mode, initialData, setIsDrawerOpen]);
 
   const handleImageChange = (event) => {
     if (isCancelling) return;
@@ -316,9 +303,7 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
       }));
       setImageFile(file);
       
-      // Revoke previous URL to prevent memory leaks
       cleanupImagePreview();
-      
       setImagePreview(URL.createObjectURL(file));
     } else {
       handleRemoveImage();
@@ -327,34 +312,25 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
 
   const handleRemoveImage = (e) => {
     if (e) {
-      e.stopPropagation(); // Prevent event bubbling to parent
+      e.stopPropagation();
     }
     
     if (isCancelling) return;
     
-    // Revoke URL to prevent memory leaks
     cleanupImagePreview();
     
     setImageFile(null);
-    setImagePreview(null);
+    // Always set to default image instead of null
+    setImagePreview(DEFAULT_CASE_STUDY_IMAGE);
     
     if (inputRef.current) {
       inputRef.current.value = "";
     }
-    
-    if (!isCancelling) {
-      setErrors(prev => ({
-        ...prev,
-        image: "Image is required"
-      }));
-    }
   };
 
   const resetForm = () => {
-    // Only run if the component is still mounted
     if (!formMounted.current) return;
     
-    // Revoke URL to prevent memory leaks
     cleanupImagePreview();
     
     setTitle("");
@@ -362,7 +338,7 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
     setDescription("");
     setAuthor("");
     setImageFile(null);
-    setImagePreview(null);
+    setImagePreview(DEFAULT_CASE_STUDY_IMAGE);
     setWordCount(0);
     setErrors({});
     
@@ -378,11 +354,6 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
     setIsSubmitting(true);
     
     try {
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("subTitle", subTitle);
-      formData.append("author", author);
-      formData.append("description", description);
       const newErrors = {};
 
       const titleError = validateField('title', title);
@@ -396,9 +367,6 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
 
       const authorError = validateField('author', author, mode);
       if (authorError) newErrors.author = authorError;
-
-      const imageError = validateField('image', imageFile, mode);
-      if (imageError) newErrors.image = imageError;
       
       if (Object.keys(newErrors).length > 0) {
         setErrors(newErrors);
@@ -408,53 +376,45 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
       
       setLoading(true);
       
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       if (mode === "add") {
-        if (imageFile) {
-          formData.append("image", imageFile);
+        const newCaseStudy = {
+          id: generateId(),
+          title,
+          subTitle,
+          author,
+          description,
+          image: DEFAULT_CASE_STUDY_IMAGE, // Always use default image
+          createdAt: new Date().toISOString()
+        };
+
+        if (onAddClient) {
+          onAddClient(newCaseStudy);
         }
 
-        let response = await axiosInstance.post("/casestudy/create-case-study", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-
-        toast.success(response.data.message || "Casestudy created successfully!");
+        toast.success("Case study created successfully!");
       } else if (mode === "edit" && initialData) {
-        if(!imagePreview){
-          setErrors(prev => ({
-            ...prev,
-            image: "Image is required"
-          }));
-          setIsSubmitting(false);
-          setLoading(false);
-          return;
-        }
+        const updatedCaseStudy = {
+          ...initialData,
+          title,
+          subTitle,
+          author,
+          description,
+          image: imagePreview || DEFAULT_CASE_STUDY_IMAGE, // Use preview or default
+          updatedAt: new Date().toISOString()
+        };
 
-        if (imageFile) {
-          formData.append("image", imageFile);
+        if (onUpdateClient) {
+          onUpdateClient(updatedCaseStudy);
         }
         
-        const response = await axiosInstance.put(
-          `/casestudy/update-casestudy/${initialData.id}`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-        playNotificationSound();
-        toast.success(response.data.message || "Client updated successfully!");
+        toast.success("Case study updated successfully!");
       }
 
-      // Only run callback if still mounted
       if (formMounted.current) {
-        if (refreshClientList) {
-          refreshClientList();
-        }
-        
-        // Only reset form after successful submission, not on cancel
+        // Don't call refreshClientList since we're already updating state via onAddClient/onUpdateClient
         resetForm();
         setIsDrawerOpen(false);
       }
@@ -485,17 +445,13 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
   const handleContentChange = (value) => {
     if (isCancelling) return;
     setDescription(value);
-    // validation is handled in the useEffect
   };
   
   const onCancel = () => {
-    // Prevent multiple cancel button clicks
     if (isCancelling) return;
     
-    // Set cancelling state to true to disable inputs and prevent further actions
     setIsCancelling(true);
     
-    // Clear any existing timeouts to prevent race conditions
     if (cancelTimeoutRef.current) {
       clearTimeout(cancelTimeoutRef.current);
     }
@@ -503,21 +459,15 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
       clearTimeout(resetTimeoutRef.current);
     }
     
-    // Clear errors immediately to prevent flashes
     setErrors({});
-    
-    // Close the drawer first
     setIsDrawerOpen(false);
     
-    // Only reset cancelling state after the drawer has fully closed
-    // But DON'T reset the form - let the useEffect handle loading data when drawer reopens
     resetTimeoutRef.current = setTimeout(() => {
       if (formMounted.current) {
-        // Don't reset form here, just reset the cancelling state
         setIsCancelling(false);
       }
       resetTimeoutRef.current = null;
-    }, 400); // Give enough time for drawer closing animation
+    }, 400);
   };
 
   return (
@@ -548,7 +498,7 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
         {errors.title && <p className="text-error text-sm mt-1">{errors.title}</p>}
       </div>
 
-      {/* Website Input */}
+      {/* Subtitle Input */}
       <div className="form-control mb-4">
         <label className="label">
           <span className="label-text">SubTitle</span>
@@ -574,6 +524,7 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
         {errors.subtitle && <p className="text-error text-sm mt-1">{errors.subtitle}</p>}
       </div>
       
+      {/* Author Input */}
       <div className="form-control mb-4">
         <label className="label">
           <span className="label-text">Author</span>
@@ -644,12 +595,10 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
               flex-wrap: wrap;
             }
             
-            /* Add tooltips styling */
             .quill-container .ql-toolbar button {
               position: relative;
             }
             
-            /* Error state styling */
             .quill-error .ql-toolbar {
               border-color: #f56565;
             }
@@ -658,19 +607,16 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
               border-color: #f56565;
             }
             
-            /* Light Mode Styles */
             .light-mode .ql-editor::before {
-              color: gray !important; /* Light mode placeholder color */
+              color: gray !important;
               opacity: 0.6;
             }
 
-            /* Dark Mode Styles */
             .dark-mode .ql-editor::before {
-              color: white !important; /* Dark mode placeholder color */
+              color: white !important;
               opacity: 0.6;
             }
             
-            /* Toolbar button styles */
             .dark-mode .ql-toolbar button {
               color: #e2e8f0;
             }
@@ -691,18 +637,15 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
               color: #e2e8f0;
             }
             
-            /* Improve button styling in toolbar */
             .ql-toolbar button {
               margin: 2px;
             }
             
-            /* Make sure images are responsive within the editor */
             .ql-editor img {
               max-width: 100%;
               height: auto;
             }
             
-            /* Better table styling */
             .ql-editor table {
               border-collapse: collapse;
               width: 100%;
@@ -714,7 +657,6 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
               padding: 8px;
             }
             
-            /* Code block styling */
             .ql-editor pre {
               background-color: #f1f1f1;
               color: #333;
@@ -733,57 +675,28 @@ function CaseForm({ onClientCreated, refreshClientList, initialData, mode, setIs
         {errors.description && <p className="text-error text-sm mt-1">{errors.description}</p>}
       </div>
 
-      {/* Image Upload */}
+      {/* Image Display Section */}
       <div className="form-control mb-4">
         <label className="label">
-        <span className="label-text">Normal Image <span className="text-error"> *</span>
-        <span> ( JPG/PNG,-1024×768 px, less than 2 MB, no high-res files.)</span>
-        </span>
+          <span className="label-text">Image 
+            <span className="text-info ml-2">(Default template image will be used)</span>
+          </span>
         </label>
-        <div
-          className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center text-center ${isCancelling ? '' : 'cursor-pointer'} ${errors.image ? 'border-error' : 'border-neutral'}`}
-          onClick={() => !isCancelling && inputRef.current?.click()}
-        >
-          {!imagePreview ? (
-            <>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-10 w-10 text-primary mb-2"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path d="M4 3a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm0 2h12v3.586l-1.293-1.293a1 1 0 00-1.414 0L10 12l-2.293-2.293a1 1 0 00-1.414 0L4 12V5zm0 10v-1.586l2.293-2.293a1 1 0 011.414 0L10 13l3.293-3.293a1 1 0 011.414 0L16 12.414V15H4z" />
-              </svg>
-              <p className="text-neutral-content">Drag and drop or click to upload</p>
-            </>
-          ) : (
-            <div className="relative">
-              <img
-                src={imagePreview}
-                alt="Preview"
-                className="w-full h-auto rounded-lg shadow-lg"
-              />
-              {!isCancelling && (
-                <button
-                  type="button"
-                  className="absolute top-2 right-2 btn btn-xs btn-error"
-                  onClick={(e) => handleRemoveImage(e)}
-                >
-                  Remove
-                </button>
-              )}
+        <div className="border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center text-center border-neutral">
+          <div className="relative">
+            <img
+              src={imagePreview || DEFAULT_CASE_STUDY_IMAGE}
+              alt="Case Study Preview"
+              className="w-full h-auto max-h-48 rounded-lg shadow-lg object-cover"
+            />
+            <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
+              <p className="text-white text-sm font-medium">Default Template Image</p>
             </div>
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            ref={inputRef}
-            onChange={handleImageChange}
-            disabled={isCancelling}
-          />
+          </div>
+          <p className="text-neutral-content text-sm mt-2">
+            This template uses a default image for all case studies
+          </p>
         </div>
-        {errors.image && <p className="text-error text-sm mt-1">{errors.image}</p>}
       </div>
 
       {/* Submit Button */}

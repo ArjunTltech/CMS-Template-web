@@ -44,9 +44,11 @@ import { NavLink } from "react-router-dom";
 import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css';
 import { useEffect, useState } from "react";
-import axiosInstance from "../config/axios";
-import { useAuth } from "../context/AuthContext";
-
+// import axiosInstance from "../config/axios"; // Commented out - no longer needed
+// import { useAuth } from "../context/AuthContext"; // Commented out - using mock data instead
+import { sidebarCounts, mockAuthState, simulateApiDelay } from "../components/data/dummySidebar";
+import logo from '../assets/logo/new-logo-landscape.png'; 
+import logoIcon from '../assets/logo/new logo.png'; 
 
 function Sidebar({ isOpen, onClose, isCollapsed, setIsCollapsed }) {
 
@@ -65,39 +67,47 @@ function Sidebar({ isOpen, onClose, isCollapsed, setIsCollapsed }) {
         newsletters: 0,
         clients: 0,
         socialMedia: 0,
+        team: 0
     });
-    const { authState } = useAuth();
+
+    // Using mock auth state instead of useAuth hook
+    const authState = mockAuthState;
+
     useEffect(() => {
         const fetchCounts = async () => {
             try {
-                const { data } = await axiosInstance.get('/stats/total-counts');
+                // Simulate API call with dummy data
+                // Optional: add delay to simulate network request
+                const data = await simulateApiDelay(sidebarCounts, 200);
+                
                 setCount({
-                    enquiries: data.counts.enquiries.unread || 0,
-                    comments: 0,
-                    notifications: data.counts.notifications.unread || 0,
-                    blogs: data.counts.blogs.total || 0,
-                    cases: data.counts.cases.total || 0,
-                    carrers: data.counts.carrers.total || 0,
-                    services: data.counts.services.total || 0,
-                    youTubeVideo: data.counts.youTubeVideo.total || 0,
-                    users: data.counts.users.total || 0,
-                    faqs: data.counts.faqs.total || 0,
-                    testimonials: data.counts.testimonials.total || 0,
-                    newsletters: data.counts.newsletter.subscribers || 0,
-                    clients: data.counts.clients.total || 0,
-                    socialMedia: data.counts.social.active || 0,
-                    team: data.counts.team.active || 0
+                    enquiries: data.enquiries || 0,
+                    comments: data.comments || 0,
+                    notifications: data.notifications || 0,
+                    blogs: data.blogs || 0,
+                    cases: data.cases || 0,
+                    carrers: data.carrers || 0,
+                    services: data.services || 0,
+                    youTubeVideo: data.youTubeVideo || 0,
+                    users: data.users || 0,
+                    faqs: data.faqs || 0,
+                    testimonials: data.testimonials || 0,
+                    newsletters: data.newsletters || 0,
+                    clients: data.clients || 0,
+                    socialMedia: data.socialMedia || 0,
+                    team: data.team || 0
                 });
             } catch (error) {
                 console.error('Error fetching sidebar counts:', error);
-                // Keep the previous state on error
                 setCount(prevCount => prevCount);
             }
         };
 
         fetchCounts();
 
-        const interval = setInterval(fetchCounts, 60000); // Refresh every minute
+        // Optional: Keep the interval for demonstration purposes
+        // In a real template, you might want to remove this
+        const interval = setInterval(fetchCounts, 60000); 
 
         return () => clearInterval(interval);
     }, []);
@@ -115,13 +125,11 @@ function Sidebar({ isOpen, onClose, isCollapsed, setIsCollapsed }) {
             section: "Content Management",
             items: [
                 { name: 'Pages', path: '/pages', icon: Layout },
-                // { name: 'Blog Posts', path: '/posts', icon: PenTool, count: count.blogs },
                 { name: 'Case Studies', path: '/case-study', icon: BookOpenCheck, count: count.cases },
                 { name: 'Careers', path: '/career', icon: UserCog, count: count.carrers },
                 { name: 'Blogs', path: '/blog', icon: PenTool, count: count.blogs },
                 { name: 'Compliance', path: '/documents', icon: FileText },
                 { name: 'SEO Editor', path: '/seo-editor', icon: Layers },
-                // { name: 'Video Management', path: '/youtube-videos', icon: YoutubeIcon, count: count.youTubeVideo },
                 { name: 'Team Management', path: '/team', icon: Users, count: count.team },
                 { name: 'FAQs', path: '/faqs', icon: FileQuestion, count: count.faqs },
                 { name: 'Services', path: '/services', icon: BriefcaseBusiness, count: count.services },
@@ -139,7 +147,6 @@ function Sidebar({ isOpen, onClose, isCollapsed, setIsCollapsed }) {
             section: "Marketing",
             items: [
                 { name: 'Newsletters', path: '/newsletters', icon: Newspaper, count: count.newsletters },
-                // { name: 'Comments', path: '/comments', icon: MessageSquare, count: count.comments },
                 { name: 'Testimonials', path: '/testimonials', icon: MessageSquare, count: count.testimonials },
                 { name: 'Social Media', path: '/social', icon: Globe, count: count.socialMedia },
             ]
@@ -148,7 +155,6 @@ function Sidebar({ isOpen, onClose, isCollapsed, setIsCollapsed }) {
             section: "System",
             items: [
                 // { name: 'Notifications', path: '/notifications', icon: Bell, count: count.notifications },
-                // // { name: 'SEO', path: '/seo', icon: Globe },
                 { name: 'Mail Config', path: '/mail-config', icon: MailIcon },
                 { name: 'Settings', path: '/settings', icon: Settings },
                 // { name: 'Help & Docs', path: '/help', icon: HelpCircle }
@@ -228,9 +234,18 @@ function Sidebar({ isOpen, onClose, isCollapsed, setIsCollapsed }) {
                 ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
             >
                 <div className="flex items-center justify-between h-16 px-3">
-                    <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isCollapsed ? 'w-0' : 'w-40'
+                    <div className="flex items-center justify-center w-full">
+                        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                            isCollapsed ? 'w-0 opacity-0' : 'w-40 opacity-100'
                         }`}>
-                        <img src="src/images/demologo.png" alt="" className="h-10 w-auto rounded-sm" />
+                            <img src={logo} alt="Logo" className="h-14 w-auto rounded-sm" />
+                        </div>
+                        
+                        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                            isCollapsed ? 'w-10 opacity-100' : 'w-0 opacity-0'
+                        }`}>
+                            <img src={logoIcon} alt="Logo Icon" className="h-10 w-10 rounded-sm" />
+                        </div>
                     </div>
 
                     <button
@@ -250,12 +265,10 @@ function Sidebar({ isOpen, onClose, isCollapsed, setIsCollapsed }) {
 
                 <nav className="px-2 h-[calc(100vh-4rem)] overflow-y-auto scrollbar-hidden pb-24">
                     {navigation.map((section, index) => {
-                        // Filter items based on role requirements
                         const filteredItems = section.items.filter(item =>
                             !item.role || authState.role === item.role
                         );
 
-                        // Skip rendering the entire section if no items remain after filtering
                         if (filteredItems.length === 0) {
                             return null;
                         }
@@ -293,7 +306,6 @@ function Sidebar({ isOpen, onClose, isCollapsed, setIsCollapsed }) {
 
             </aside>
 
-            {/* Add custom styles for Tippy */}
             <style>{`
                 .tippy-box {
                     background-color: rgb(17, 24, 39);

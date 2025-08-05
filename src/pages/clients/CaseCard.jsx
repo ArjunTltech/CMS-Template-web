@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Trash2, Pencil } from "lucide-react";
-import axiosInstance from "../../config/axios";
 import { toast } from "react-toastify";
 import DeleteConfirmModal from "../../components/ui/modal/DeleteConfirmModal";
 
@@ -11,9 +10,13 @@ const CaseCard = ({ casestudy, onDelete, onEdit }) => {
   const handleDelete = async () => {
     setIsLoading(true);
     try {
-      const response = await axiosInstance.delete(`casestudy/delete-casestudy/${casestudy.id}`);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Call the parent's onDelete function to update the state
       onDelete(casestudy.id);
-      toast.success(response.data.message || "Case study deleted successfully!");
+      
+      toast.success("Case study deleted successfully!");
     } catch (error) {
       console.error("Error deleting case study:", error);
       toast.error("Failed to delete case study.");
@@ -28,7 +31,7 @@ const CaseCard = ({ casestudy, onDelete, onEdit }) => {
       <div className="card bg-base-200 transition-all duration-300 overflow-hidden group relative flex flex-col h-full">
         <figure className="relative h-48 overflow-hidden">
           <img
-            src={casestudy?.image || "/api/placeholder/400/250"}
+            src={casestudy?.image || "https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"}
             alt={casestudy?.title}
             className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
           />
