@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Search } from "lucide-react";
-
-import axiosInstance from "../../config/axios";
+import { dummyCaseStudies } from "../../components/data/dummyCaseStudies";
 import CaseCard from "./CaseCard";
 import CaseForm from "./CaseForm";
 
@@ -14,15 +13,16 @@ function CaseLayout() {
   const [mode, setMode] = useState("add");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Fetch Clients
+  // Initialize with dummy data
   const refreshClientList = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axiosInstance.get("/casestudy/get-all-casestudy");      
-      setCaseStudy(response.data.data);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setCaseStudy(dummyCaseStudies);
     } catch (err) {
       setError("Failed to load case studies");
-      console.error("Error fetching case studies:", err);
+      console.error("Error loading case studies:", err);
     } finally {
       setLoading(false);
     }
@@ -53,10 +53,24 @@ function CaseLayout() {
     );
   };
 
+  // Handle Add Client (called from CaseForm)
+  const handleAddClient = (newCaseStudy) => {
+    setCaseStudy((prevCase) => [newCaseStudy, ...prevCase]);
+  };
+
+  // Handle Update Client (called from CaseForm)
+  const handleUpdateClient = (updatedCaseStudy) => {
+    setCaseStudy((prevCase) =>
+      prevCase.map((casestudy) =>
+        casestudy.id === updatedCaseStudy.id ? updatedCaseStudy : casestudy
+      )
+    );
+  };
+
   // Filter clients based on search query
   const filteredClients = caseStudy.filter((casestudy) =>
     casestudy.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-  casestudy.author?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    casestudy.author?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     casestudy.subTitle?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -74,10 +88,9 @@ function CaseLayout() {
         <div className="drawer-content">
           {/* Header Section */}
           <div className="flex justify-between items-center mb-8">
-          <div className=' space-y-2'>
-
-            <h1 className="text-3xl font-bold text-neutral-content">Case Studies</h1>
-            <p >Total Case Studies : {caseStudy.length}</p>
+            <div className='space-y-2'>
+              <h1 className="text-3xl font-bold text-neutral-content">Case Studies</h1>
+              <p>Total Case Studies : {caseStudy.length}</p>
             </div>
 
             <button
@@ -149,8 +162,9 @@ function CaseLayout() {
               onClientUpdated={refreshClientList}
               initialData={editClient}
               mode={mode}
-              refreshClientList={refreshClientList}
               setIsDrawerOpen={setIsDrawerOpen}
+              onAddClient={handleAddClient}
+              onUpdateClient={handleUpdateClient}
             />
           </div>
         </div>

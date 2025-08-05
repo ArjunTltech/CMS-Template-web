@@ -1,5 +1,5 @@
 import { createBrowserRouter } from 'react-router-dom';
-import DashboardLayout from '../layout/HomeLayout';  // Assuming HomeLayout is your dashboard layout
+import DashboardLayout from '../layout/HomeLayout';
 import Overview from '../pages/dashboard/Overview';
 import Analytics from '../pages/dashboard/Analytics';
 import Reports from '../pages/dashboard/Reports';
@@ -33,14 +33,13 @@ import OrganizationDetails from '../pages/organization-details/OrganizationDetai
 import ServiceLayout from '../pages/services/ServiceLayout.jsx';
 import SpecialSymbol from './SpecialSymbol.jsx';
 import CaseLayout from '../pages/clients/CaseLayout.jsx';
-import VideoReorderPage from '../pages/youTube-Videos/VideoReorderPage.jsx';
 import CareerLayout from '../pages/career/CareerLayout.jsx';
 
 
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <ProtectedRoute><DashboardLayout /></ProtectedRoute>,  // This is the layout for your dashboard
+    element: <ProtectedRoute><DashboardLayout /></ProtectedRoute>,
     children: [
       {
         index: true,
@@ -138,10 +137,6 @@ export const router = createBrowserRouter([
         path: 'services',
         element: <ProtectedRoute><ServiceLayout /></ProtectedRoute>,
       },
-      {
-        path: 'youtube-videos',
-        element: <ProtectedRoute><VideoReorderPage /></ProtectedRoute>,
-      }
     ],
   },
   {
@@ -174,6 +169,6 @@ export const router = createBrowserRouter([
   },
   {
     path: '*',
-    element: <SpecialSymbol><Error404 /></SpecialSymbol> 
+    element: <SpecialSymbol><Error404 /></SpecialSymbol>
   },
 ]);

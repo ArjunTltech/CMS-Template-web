@@ -371,7 +371,7 @@ const EnquiriesView = () => {
     startDate: '',
     endDate: '',
     page: 1,
-    limit: 10
+    limit: 6
   });
   const [pagination, setPagination] = useState({
     total: 0,

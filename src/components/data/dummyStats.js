@@ -3,11 +3,11 @@ export const dummyTotalOverView = {
 };
 
 export const dummyTotalServices = {
-    totalServices: 8,
+    totalServices: 4,
 };
 
 export const dummyTotalEnquiry = {
-    totalEnquiry: 5,
+    totalEnquiry: 10,
 };
 
 export const dummyTotalSubscribers = {
