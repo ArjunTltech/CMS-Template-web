@@ -47,11 +47,11 @@ const MailConfig = () => {
   } = useForm({
     resolver: yupResolver(mailConfigSchema),
     defaultValues: {
-      host: '',
-      port: '',
-      secure: false,
-      authUser: '',
-      authPass: ''
+    host: 'smtp.mailtrap.io',
+  port: 2525,
+  secure: false, 
+  authUser: 'd3f1f2e4b3c5a8',   
+  authPass: 'a9c8b7d6e5f4g3'
     }
   });
 
